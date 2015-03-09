@@ -1,16 +1,16 @@
 package com.sta.dhbw.stauapp;
 
 import android.location.LocationManager;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.TextView;
 
 
 public class MainActivity extends ActionBarActivity
 {
-    final LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
+    private LocationManager service;
+    private boolean gpsIsActive;
 
 
     @Override
@@ -18,7 +18,8 @@ public class MainActivity extends ActionBarActivity
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        checkGps();
+        service = (LocationManager) getSystemService(LOCATION_SERVICE);
+        gpsIsActive = checkGps();
 
 
     }
@@ -26,7 +27,8 @@ public class MainActivity extends ActionBarActivity
     @Override
     protected void onResume()
     {
-       checkGps();
+        super.onResume();
+        gpsIsActive = checkGps();
     }
 
 
@@ -55,17 +57,8 @@ public class MainActivity extends ActionBarActivity
         return super.onOptionsItemSelected(item);
     }
 
-    private void checkGps()
+    private boolean checkGps()
     {
-        TextView textView = (TextView) findViewById(R.id.status);
-
-        boolean isActive =service.isProviderEnabled(LocationManager.GPS_PROVIDER);
-        if(!isActive)
-        {
-            textView.setText("GPS not enabled");
-        } else
-        {
-            textView.setText("GPS enabled");
-        }
+        return service.isProviderEnabled(LocationManager.GPS_PROVIDER);
     }
 }
