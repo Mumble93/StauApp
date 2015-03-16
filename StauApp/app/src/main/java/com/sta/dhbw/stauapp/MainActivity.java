@@ -9,7 +9,7 @@ import android.view.MenuItem;
 
 public class MainActivity extends ActionBarActivity
 {
-    private LocationManager service;
+    private LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
     private boolean gpsIsActive;
 
 
@@ -18,8 +18,7 @@ public class MainActivity extends ActionBarActivity
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        service = (LocationManager) getSystemService(LOCATION_SERVICE);
-        gpsIsActive = checkGps();
+        gpsIsActive = Utils.checkGps(service);
 
 
     }
@@ -28,7 +27,7 @@ public class MainActivity extends ActionBarActivity
     protected void onResume()
     {
         super.onResume();
-        gpsIsActive = checkGps();
+        gpsIsActive = Utils.checkGps((service));
     }
 
 
@@ -57,8 +56,4 @@ public class MainActivity extends ActionBarActivity
         return super.onOptionsItemSelected(item);
     }
 
-    private boolean checkGps()
-    {
-        return service.isProviderEnabled(LocationManager.GPS_PROVIDER);
-    }
 }
