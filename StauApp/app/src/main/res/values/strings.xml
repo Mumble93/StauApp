@@ -1,8 +1,10 @@
 <resources>
-    <string name="app_name">StauApp</string>
+    <string name="app_name">JamBeacon</string>
 
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="gps_alert_message">GPS muss für eine genaue Positionsbestimmung aktiviert sein. Bitt aktivieren Sie Ihr GPS und starten Sie die App erneut.</string>
+    <string name="dialog_close">Schließen</string>
 
 
     <string name="splash_text">DHBW Stuttgart JamBeacon</string>

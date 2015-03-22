@@ -1,6 +1,5 @@
 package com.sta.dhbw.stauapp;
 
-import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
@@ -9,7 +8,6 @@ import android.view.MenuItem;
 
 public class MainActivity extends ActionBarActivity
 {
-    private LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
     private boolean gpsIsActive;
 
 
@@ -18,16 +16,13 @@ public class MainActivity extends ActionBarActivity
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        gpsIsActive = Utils.checkGps(service);
-
-
     }
 
     @Override
     protected void onResume()
     {
         super.onResume();
-        gpsIsActive = Utils.checkGps((service));
+        gpsIsActive = Utils.checkGps(MainActivity.this);
     }
 
 
