@@ -3,9 +3,12 @@
 
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
-    <string name="gps_alert_message">GPS muss für eine genaue Positionsbestimmung aktiviert sein. Bitt aktivieren Sie Ihr GPS und starten Sie die App erneut.</string>
+    <string name="gps_alert_message">GPS muss für eine genaue Positionsbestimmung aktiviert sein. Bitte aktivieren Sie Ihr GPS und starten Sie die App erneut.</string>
+    <string name="gps_alert_dialog_title">GPS nicht aktiviert!</string>
     <string name="dialog_close">Schließen</string>
 
 
     <string name="splash_text">DHBW Stuttgart JamBeacon</string>
+    <string name="enter_new_route">Neue Route erstellen</string>
+    <string name="show_jams">Staus anzeigen</string>
 </resources>

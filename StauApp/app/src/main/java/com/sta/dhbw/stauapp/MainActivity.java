@@ -1,18 +1,26 @@
 package com.sta.dhbw.stauapp;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
+import com.sta.dhbw.stauapp.settings.SettingsActivity;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,7 +28,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class MainActivity extends ActionBarActivity
 {
-    private boolean gpsIsActive;
     private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
     public static final String PROPERTY_REG_ID = "registration_id";
     private static final String PROPERTY_APP_VERSION = "appVersion";
@@ -30,9 +37,11 @@ public class MainActivity extends ActionBarActivity
     String SENDER_ID = "821661182636";
 
     TextView mDisplay;
+    Button routeButton, jamListButton;
     GoogleCloudMessaging gcm;
     AtomicInteger msgId = new AtomicInteger();
     SharedPreferences prefs;
+
     Context context;
 
     String regId;
@@ -44,6 +53,26 @@ public class MainActivity extends ActionBarActivity
         setContentView(R.layout.activity_main);
 
         mDisplay = (TextView) findViewById(R.id.message_display);
+        routeButton = (Button) findViewById(R.id.new_route);
+        jamListButton = (Button) findViewById(R.id.view_traffic_issues);
+
+        routeButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                //ToDo: Starte Routeneingabefenster und Standorterfassung
+            }
+        });
+
+        jamListButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                //ToDo: Start Ansicht für Stauliste
+            }
+        });
 
         context = getApplicationContext();
 
@@ -55,20 +84,48 @@ public class MainActivity extends ActionBarActivity
 
             if (regId.isEmpty())
             {
+                Log.i(TAG, "Registering for GCM Services");
                 registerInBackground();
-            } else
-            {
-                Log.i(TAG, "No valid Google Play Services APK found.");
             }
+        } else
+        {
+            Log.i(TAG, "No valid Google Play Services APK found.");
         }
+
     }
 
     @Override
     protected void onResume()
     {
         super.onResume();
-        gpsIsActive = Utils.checkGps(context);
+        if (!Utils.checkGps(context))
+        {
+            DialogFragment fragment = GpsAlertDialog.newInstance(R.string.gps_alert_dialog_title);
+            fragment.show(getSupportFragmentManager(), "dialog");
+        }
         checkPlayServices();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu)
+    {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_main, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item)
+    {
+        switch (item.getItemId())
+        {
+            case R.id.action_settings:
+                Intent intent = new Intent(this, SettingsActivity.class);
+                startActivity(intent);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
 
@@ -93,6 +150,7 @@ public class MainActivity extends ActionBarActivity
             }
             return false;
         }
+        Log.i(TAG, "Google Play Services available");
         return true;
     }
 
@@ -109,7 +167,7 @@ public class MainActivity extends ActionBarActivity
     {
         final SharedPreferences prefs = getGCMPreferences(context);
         String registrationId = prefs.getString(PROPERTY_REG_ID, "");
-        if (registrationId.isEmpty())
+        if (registrationId == null || registrationId.isEmpty())
         {
             Log.i(TAG, "Registration not found.");
             return "";
@@ -153,6 +211,7 @@ public class MainActivity extends ActionBarActivity
 
     private void registerInBackground()
     {
+        Log.i(TAG, "Getting new Registration Id");
         new AsyncTask<Void, Void, String>()
         {
             @Override
@@ -182,6 +241,7 @@ public class MainActivity extends ActionBarActivity
             @Override
             protected void onPostExecute(String msg)
             {
+                //ToDo: For development only. DELETE BEFORE RELEASE!
                 mDisplay.append(msg + "\n");
             }
         }.execute(null, null, null);

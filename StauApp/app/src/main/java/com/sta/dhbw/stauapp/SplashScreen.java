@@ -1,17 +1,18 @@
 package com.sta.dhbw.stauapp;
 
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.CountDownTimer;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentActivity;
+import android.util.Log;
 
-public class SplashScreen extends Activity
+public class SplashScreen extends FragmentActivity
 {
     Context context;
+    private static final String TAG = "Splash";
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -21,36 +22,28 @@ public class SplashScreen extends Activity
 
         context = getApplicationContext();
 
-        Intent intent = new Intent(context, MainActivity.class);
+        final Intent intent = new Intent(context, MainActivity.class);
         if (Utils.checkGps(context))
         {
             //ToDo: Implement check for server connectivity and retrieval of known traffic issues
-            try
+            new CountDownTimer(5000, 1000)
             {
-                Thread.sleep(3000L);
-            } catch (InterruptedException e)
-            {
-                e.printStackTrace();
-            }
-            startActivity(intent);
-            finish();
-        } else
-        {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle(R.string.app_name);
-            builder.setCancelable(false);
-            builder.setMessage(R.string.gps_alert_message);
-            builder.setPositiveButton(R.string.dialog_close, new DialogInterface.OnClickListener()
-            {
-                @Override
-                public void onClick(DialogInterface dialog, int which)
+                public void onTick(long time)
                 {
-                    dialog.dismiss();
+                }
+
+                public void onFinish()
+                {
+                    Log.i(TAG, "Closing Splash, launching app");
+                    startActivity(intent);
                     finish();
                 }
-            });
-            Dialog dialog = builder.create();
-            dialog.show();
+            }.start();
+
+        } else
+        {
+            DialogFragment fragment = GpsAlertDialog.newInstance(R.string.gps_alert_dialog_title);
+            fragment.show(getSupportFragmentManager(), "dialog");
         }
 
     }

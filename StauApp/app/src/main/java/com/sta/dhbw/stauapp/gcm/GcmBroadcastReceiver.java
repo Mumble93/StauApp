@@ -1,4 +1,4 @@
-package com.sta.dhbw.stauapp;
+package com.sta.dhbw.stauapp.gcm;
 
 
 import android.app.Activity;

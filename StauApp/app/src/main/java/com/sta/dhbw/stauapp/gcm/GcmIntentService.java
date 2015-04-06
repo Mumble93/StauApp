@@ -1,4 +1,4 @@
-package com.sta.dhbw.stauapp;
+package com.sta.dhbw.stauapp.gcm;
 
 import android.app.IntentService;
 import android.app.NotificationManager;
@@ -10,6 +10,8 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
+import com.sta.dhbw.stauapp.MainActivity;
+import com.sta.dhbw.stauapp.R;
 
 public class GcmIntentService extends IntentService
 {
