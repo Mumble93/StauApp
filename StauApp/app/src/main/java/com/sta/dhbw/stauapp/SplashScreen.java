@@ -42,7 +42,7 @@ public class SplashScreen extends FragmentActivity
 
         } else
         {
-            DialogFragment fragment = GpsAlertDialog.newInstance(R.string.gps_alert_dialog_title);
+            DialogFragment fragment = GpsAlertDialogFragment.newInstance(R.string.gps_alert_dialog_title);
             fragment.show(getSupportFragmentManager(), "dialog");
         }
 

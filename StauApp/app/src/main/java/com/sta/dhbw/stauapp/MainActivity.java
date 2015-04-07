@@ -70,7 +70,7 @@ public class MainActivity extends ActionBarActivity
             @Override
             public void onClick(View v)
             {
-                //ToDo: Start Ansicht für Stauliste
+                //ToDo: Start Ansicht fï¿½r Stauliste
             }
         });
 
@@ -100,7 +100,7 @@ public class MainActivity extends ActionBarActivity
         super.onResume();
         if (!Utils.checkGps(context))
         {
-            DialogFragment fragment = GpsAlertDialog.newInstance(R.string.gps_alert_dialog_title);
+            DialogFragment fragment = GpsAlertDialogFragment.newInstance(R.string.gps_alert_dialog_title);
             fragment.show(getSupportFragmentManager(), "dialog");
         }
         checkPlayServices();

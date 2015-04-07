@@ -6,11 +6,11 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 
-public class GpsAlertDialog extends DialogFragment
+public class GpsAlertDialogFragment extends DialogFragment
 {
-    public static GpsAlertDialog newInstance(int title)
+    public static GpsAlertDialogFragment newInstance(int title)
     {
-        GpsAlertDialog frag = new GpsAlertDialog();
+        GpsAlertDialogFragment frag = new GpsAlertDialogFragment();
         Bundle args = new Bundle();
         args.putInt("title", title);
         frag.setArguments(args);
