@@ -4,15 +4,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.CountDownTimer;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
-import android.util.Log;
+
+import com.sta.dhbw.stauapp.Utils.ConnectionIssues;
 
 public class SplashScreen extends FragmentActivity
 {
     Context context;
-    private static final String TAG = "Splash";
+    private static final String TAG = SplashScreen.class.getSimpleName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -23,26 +23,33 @@ public class SplashScreen extends FragmentActivity
         context = getApplicationContext();
 
         final Intent intent = new Intent(context, MainActivity.class);
+
+        //Check GPS availability
         if (Utils.checkGps(context))
         {
-            //ToDo: Implement check for server connectivity and retrieval of known traffic issues
-            new CountDownTimer(5000, 1000)
+            //Check internet connection
+            if (!Utils.checkInternetConnection(context))
             {
-                public void onTick(long time)
+                DialogFragment fragment = AlertDialogFragment.newInstance(ConnectionIssues.NETWORTK_NOT_AVAILABLE);
+                fragment.show(getSupportFragmentManager(), "dialog");
+            } else
+            {
+                //Check if server is reachable
+                if (!Utils.checkServerAvailability())
                 {
-                }
-
-                public void onFinish()
+                    DialogFragment fragment = AlertDialogFragment.newInstance(ConnectionIssues.SERVER_NOT_AVAILABLE);
+                    fragment.show(getSupportFragmentManager(), "dialog");
+                } else
                 {
-                    Log.i(TAG, "Closing Splash, launching app");
+                    //If code reaches this line, all tests should have passed
+                    //ToDo: Get known traffic issues
                     startActivity(intent);
                     finish();
                 }
-            }.start();
-
+            }
         } else
         {
-            DialogFragment fragment = GpsAlertDialogFragment.newInstance(R.string.gps_alert_dialog_title);
+            DialogFragment fragment = AlertDialogFragment.newInstance(ConnectionIssues.GPS_NOT_AVAILABLE);
             fragment.show(getSupportFragmentManager(), "dialog");
         }
 

@@ -16,31 +16,32 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
+import com.sta.dhbw.stauapp.Utils.ConnectionIssues;
 import com.sta.dhbw.stauapp.settings.SettingsActivity;
 
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 
 public class MainActivity extends ActionBarActivity
 {
-    private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
-    public static final String PROPERTY_REG_ID = "registration_id";
+    private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
+    private static final String PROPERTY_REG_ID = "registration_id";
     private static final String PROPERTY_APP_VERSION = "appVersion";
 
-    private static final String TAG = "JamBeacon";
+    private static final String TAG = MainActivity.class.getSimpleName();
 
-    String SENDER_ID = "821661182636";
+    private static final String SENDER_ID = "821661182636";
 
     TextView mDisplay;
-    Button routeButton, jamListButton;
+    Button routeButton, jamListButton, startBeaconButton;
     GoogleCloudMessaging gcm;
-    AtomicInteger msgId = new AtomicInteger();
-    SharedPreferences prefs;
+
+    boolean beaconStarted = false;
 
     Context context;
 
@@ -55,6 +56,10 @@ public class MainActivity extends ActionBarActivity
         mDisplay = (TextView) findViewById(R.id.message_display);
         routeButton = (Button) findViewById(R.id.new_route);
         jamListButton = (Button) findViewById(R.id.view_traffic_issues);
+        startBeaconButton = (Button) findViewById(R.id.start_beacon);
+
+        context = getApplicationContext();
+
 
         routeButton.setOnClickListener(new View.OnClickListener()
         {
@@ -74,7 +79,24 @@ public class MainActivity extends ActionBarActivity
             }
         });
 
-        context = getApplicationContext();
+        startBeaconButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View view)
+            {
+                if (!beaconStarted)
+                {
+                    Toast.makeText(context, "Beacon aktiviert", Toast.LENGTH_SHORT).show();
+                    //startService(new Intent(context, BeaconService.class));
+                } else
+                {
+                    Toast.makeText(context, "Beacon deaktiviert", Toast.LENGTH_SHORT).show();
+                    //stopService(new Intent(context, BeaconService.class));
+                }
+
+                beaconStarted = !beaconStarted;
+            }
+        });
 
         //Check for Play Services APK. Proceed with GCM registration, if successful
         if (checkPlayServices())
@@ -100,7 +122,7 @@ public class MainActivity extends ActionBarActivity
         super.onResume();
         if (!Utils.checkGps(context))
         {
-            DialogFragment fragment = GpsAlertDialogFragment.newInstance(R.string.gps_alert_dialog_title);
+            DialogFragment fragment = AlertDialogFragment.newInstance(ConnectionIssues.GPS_NOT_AVAILABLE);
             fragment.show(getSupportFragmentManager(), "dialog");
         }
         checkPlayServices();

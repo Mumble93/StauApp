@@ -1,14 +1,21 @@
 <resources>
     <string name="app_name">JamBeacon</string>
 
-    <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+
+    <!-- Titles and Messages for AlertDialogs -->
     <string name="gps_alert_message">GPS muss für eine genaue Positionsbestimmung aktiviert sein. Bitte aktivieren Sie Ihr GPS und starten Sie die App erneut.</string>
     <string name="gps_alert_dialog_title">GPS nicht aktiviert!</string>
+    <string name="network_alert_message">Um Staumeldungen empfangen und senden zu können, müssen Sie mit dem Internet verbunden sein. Bitte aktivieren Sie Ihr Netzwerk.
+    ACHTUNG: Bei Verwendung der mobilen Datenverbindung können zusätzliche Kosten bei Ihrem Provider entstehen!</string>
+    <string name="network_alert_dialog_title">Keine Internetverbindung!</string>
+    <string name="server_unavailable_message">Der Server konnte nicht erreicht werden. Bitte versuchen Sie es später noch einmal. Wir bitten um Ihr Verständnis.</string>
+    <string name="server_unavailable_dialog_title">Server offline!</string>
     <string name="dialog_close">Schließen</string>
 
 
     <string name="splash_text">DHBW Stuttgart JamBeacon</string>
     <string name="enter_new_route">Neue Route erstellen</string>
     <string name="show_jams">Staus anzeigen</string>
+    <string name="start_beacon_btn">Beacon starten</string>
 </resources>
