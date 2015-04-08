@@ -16,7 +16,7 @@ import com.sta.dhbw.stauapp.R;
 public class GcmIntentService extends IntentService
 {
     public static final int NOTIFICATION_ID = 1;
-    private static final String TAG = "GcmIntentService";
+    private static final String TAG = GcmIntentService.class.getSimpleName();
     NotificationCompat.Builder builder;
 
     public GcmIntentService()

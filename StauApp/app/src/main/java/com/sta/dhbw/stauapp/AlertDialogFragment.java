@@ -7,24 +7,31 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
 
-import com.sta.dhbw.stauapp.Utils.ConnectionIssues;
+import com.sta.dhbw.stauapp.Utils.ConnectionIssue;
 
 public class AlertDialogFragment extends DialogFragment
 {
-    public static AlertDialogFragment newInstance(ConnectionIssues issue)
+    public static AlertDialogFragment newInstance(ConnectionIssue issue, boolean finishOnConfirm)
     {
         AlertDialogFragment frag = new AlertDialogFragment();
         Bundle args = new Bundle();
         args.putSerializable("issue", issue);
+        args.putBoolean("finishOnConfirm", finishOnConfirm);
         frag.setArguments(args);
         return frag;
+    }
+
+    public static AlertDialogFragment newInstance(ConnectionIssue issue)
+    {
+        return newInstance(issue, true);
     }
 
     @Override
     @NonNull
     public Dialog onCreateDialog(Bundle savedInstanceState)
     {
-        ConnectionIssues issue = (ConnectionIssues) getArguments().getSerializable("issue");
+        ConnectionIssue issue = (ConnectionIssue) getArguments().getSerializable("issue");
+        final boolean finishOnConfirm = getArguments().getBoolean("finishOnConfirm");
         int title, message;
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
@@ -35,7 +42,10 @@ public class AlertDialogFragment extends DialogFragment
                     public void onClick(DialogInterface dialog, int which)
                     {
                         dialog.dismiss();
-                        getActivity().finish();
+                        if (finishOnConfirm)
+                        {
+                            getActivity().finish();
+                        }
                     }
                 });
 

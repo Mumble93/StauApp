@@ -21,10 +21,11 @@ import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
-import com.sta.dhbw.stauapp.Utils.ConnectionIssues;
+import com.sta.dhbw.stauapp.Utils.ConnectionIssue;
 import com.sta.dhbw.stauapp.settings.SettingsActivity;
 
 import java.io.IOException;
+import java.util.Properties;
 
 
 public class MainActivity extends ActionBarActivity
@@ -33,9 +34,16 @@ public class MainActivity extends ActionBarActivity
     private static final String PROPERTY_REG_ID = "registration_id";
     private static final String PROPERTY_APP_VERSION = "appVersion";
 
+    public static final String MIN_DISTANCE_FOR_ALERT = "minDistanceForAlert";
+
+    private static Double minDistance;
+
     private static final String TAG = MainActivity.class.getSimpleName();
 
     private static final String SENDER_ID = "821661182636";
+
+    private Properties properties;
+
 
     TextView mDisplay;
     Button routeButton, jamListButton, startBeaconButton;
@@ -60,6 +68,8 @@ public class MainActivity extends ActionBarActivity
 
         context = getApplicationContext();
 
+        properties = new AssetsPropertyReader(context).getProperties("config.properties");
+        minDistance = Double.valueOf(properties.getProperty(MIN_DISTANCE_FOR_ALERT, "2.25"));
 
         routeButton.setOnClickListener(new View.OnClickListener()
         {
@@ -86,12 +96,10 @@ public class MainActivity extends ActionBarActivity
             {
                 if (!beaconStarted)
                 {
-                    Toast.makeText(context, "Beacon aktiviert", Toast.LENGTH_SHORT).show();
-                    //startService(new Intent(context, BeaconService.class));
+                    startBeacon();
                 } else
                 {
-                    Toast.makeText(context, "Beacon deaktiviert", Toast.LENGTH_SHORT).show();
-                    //stopService(new Intent(context, BeaconService.class));
+                    stopBeacon();
                 }
 
                 beaconStarted = !beaconStarted;
@@ -120,11 +128,28 @@ public class MainActivity extends ActionBarActivity
     protected void onResume()
     {
         super.onResume();
-        if (!Utils.checkGps(context))
+        if (Utils.checkGps(context))
         {
-            DialogFragment fragment = AlertDialogFragment.newInstance(ConnectionIssues.GPS_NOT_AVAILABLE);
+            //Check internet connection
+            if (!Utils.checkInternetConnection(context))
+            {
+                DialogFragment fragment = AlertDialogFragment.newInstance(ConnectionIssue.NETWORTK_NOT_AVAILABLE);
+                fragment.show(getSupportFragmentManager(), "dialog");
+            } else
+            {
+                //Check if server is reachable
+                if (!Utils.checkServerAvailability())
+                {
+                    DialogFragment fragment = AlertDialogFragment.newInstance(ConnectionIssue.SERVER_NOT_AVAILABLE);
+                    fragment.show(getSupportFragmentManager(), "dialog");
+                }
+            }
+        } else
+        {
+            DialogFragment fragment = AlertDialogFragment.newInstance(ConnectionIssue.GPS_NOT_AVAILABLE);
             fragment.show(getSupportFragmentManager(), "dialog");
         }
+
         checkPlayServices();
     }
 
@@ -292,6 +317,20 @@ public class MainActivity extends ActionBarActivity
         editor.putString(PROPERTY_REG_ID, regId);
         editor.putInt(PROPERTY_APP_VERSION, appVersion);
         editor.apply();
+    }
+
+    private void startBeacon()
+    {
+        Toast.makeText(context, "Beacon aktiviert", Toast.LENGTH_SHORT).show();
+        Intent beaconServiceIntent = new Intent(context, BeaconService.class);
+        beaconServiceIntent.putExtra(MIN_DISTANCE_FOR_ALERT, minDistance);
+        //startService(beaconServiceIntent);
+    }
+
+    private void stopBeacon()
+    {
+        Toast.makeText(context, "Beacon deaktiviert", Toast.LENGTH_SHORT).show();
+        //stopService(new Intent(context, BeaconService.class));
     }
 }
 

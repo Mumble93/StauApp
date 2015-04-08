@@ -7,7 +7,7 @@ import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 
-import com.sta.dhbw.stauapp.Utils.ConnectionIssues;
+import com.sta.dhbw.stauapp.Utils.ConnectionIssue;
 
 public class SplashScreen extends FragmentActivity
 {
@@ -30,18 +30,18 @@ public class SplashScreen extends FragmentActivity
             //Check internet connection
             if (!Utils.checkInternetConnection(context))
             {
-                DialogFragment fragment = AlertDialogFragment.newInstance(ConnectionIssues.NETWORTK_NOT_AVAILABLE);
+                DialogFragment fragment = AlertDialogFragment.newInstance(ConnectionIssue.NETWORTK_NOT_AVAILABLE);
                 fragment.show(getSupportFragmentManager(), "dialog");
             } else
             {
                 //Check if server is reachable
                 if (!Utils.checkServerAvailability())
                 {
-                    DialogFragment fragment = AlertDialogFragment.newInstance(ConnectionIssues.SERVER_NOT_AVAILABLE);
+                    DialogFragment fragment = AlertDialogFragment.newInstance(ConnectionIssue.SERVER_NOT_AVAILABLE);
                     fragment.show(getSupportFragmentManager(), "dialog");
                 } else
                 {
-                    //If code reaches this line, all tests should have passed
+                    //If code reaches this line, all checks should have passed
                     //ToDo: Get known traffic issues
                     startActivity(intent);
                     finish();
@@ -49,7 +49,7 @@ public class SplashScreen extends FragmentActivity
             }
         } else
         {
-            DialogFragment fragment = AlertDialogFragment.newInstance(ConnectionIssues.GPS_NOT_AVAILABLE);
+            DialogFragment fragment = AlertDialogFragment.newInstance(ConnectionIssue.GPS_NOT_AVAILABLE);
             fragment.show(getSupportFragmentManager(), "dialog");
         }
 

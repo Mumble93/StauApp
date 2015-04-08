@@ -7,7 +7,7 @@ import android.net.NetworkInfo;
 
 public class Utils
 {
-    public static enum ConnectionIssues
+    public static enum ConnectionIssue
     {
         GPS_NOT_AVAILABLE, NETWORTK_NOT_AVAILABLE, SERVER_NOT_AVAILABLE, NETWORK_TIMEOUT
     }
