@@ -12,10 +12,13 @@ import android.util.Log;
 
 public class BeaconService extends Service
 {
+    /**
+     * This class is subject to change. Remodeling to IntentService class in near future possible.
+     */
     public static final String TAG = BeaconService.class.getSimpleName();
 
-    private LocationManager locationManager;
-    private LocationListener locationListener;
+    private static LocationManager locationManager;
+    private static LocationListener locationListener;
 
     private static Location lastLocation;
 
@@ -33,6 +36,7 @@ public class BeaconService extends Service
     {
         Log.i(TAG, "Beacon Service was started.");
         minDistance = intent.getDoubleExtra(MainActivity.MIN_DISTANCE_FOR_ALERT, 2.25);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 500, 0, locationListener);
         return super.onStartCommand(intent, flags, id);
     }
 
@@ -52,10 +56,14 @@ public class BeaconService extends Service
                 if (null == lastLocation)
                 {
                     lastLocation = location;
+                    return;
                 } else if (drivenDistanceBelowMinimum(lastLocation, location))
                 {
+                    Log.i(TAG, "Detected traffic jam at " + location.getLatitude() + " " + location.getLongitude());
                     sendAlarmToServer();
                 }
+
+                Log.i(TAG, "Got new position: " + location.getLatitude() + " " + location.getLongitude());
 
                 lastLocation = location;
 
@@ -70,9 +78,11 @@ public class BeaconService extends Service
                     {
                         case LocationProvider.AVAILABLE:
                             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000, 0, locationListener);
+                            Log.i(TAG, "Location Provider became available!");
                             break;
                         default:
                             locationManager.removeUpdates(locationListener);
+                            Log.i(TAG, "Location Manager became unavailable!");
                             break;
                     }
                 }
@@ -104,6 +114,7 @@ public class BeaconService extends Service
     @Override
     public void onDestroy()
     {
+        locationManager.removeUpdates(locationListener);
         Log.i(TAG, "Beacon Service destroyed");
     }
 

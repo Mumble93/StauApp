@@ -25,7 +25,6 @@ import com.sta.dhbw.stauapp.Utils.ConnectionIssue;
 import com.sta.dhbw.stauapp.settings.SettingsActivity;
 
 import java.io.IOException;
-import java.util.Properties;
 
 
 public class MainActivity extends ActionBarActivity
@@ -36,14 +35,9 @@ public class MainActivity extends ActionBarActivity
 
     public static final String MIN_DISTANCE_FOR_ALERT = "minDistanceForAlert";
 
-    private static Double minDistance;
-
     private static final String TAG = MainActivity.class.getSimpleName();
 
     private static final String SENDER_ID = "821661182636";
-
-    private Properties properties;
-
 
     TextView mDisplay;
     Button routeButton, jamListButton, startBeaconButton;
@@ -68,15 +62,12 @@ public class MainActivity extends ActionBarActivity
 
         context = getApplicationContext();
 
-        properties = new AssetsPropertyReader(context).getProperties("config.properties");
-        minDistance = Double.valueOf(properties.getProperty(MIN_DISTANCE_FOR_ALERT, "2.25"));
-
         routeButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
             public void onClick(View v)
             {
-                //ToDo: Starte Routeneingabefenster und Standorterfassung
+                //ToDo: Starte Routeneingabefenster und Standorterfassung (optional)
             }
         });
 
@@ -101,8 +92,6 @@ public class MainActivity extends ActionBarActivity
                 {
                     stopBeacon();
                 }
-
-                beaconStarted = !beaconStarted;
             }
         });
 
@@ -322,15 +311,18 @@ public class MainActivity extends ActionBarActivity
     private void startBeacon()
     {
         Toast.makeText(context, "Beacon aktiviert", Toast.LENGTH_SHORT).show();
+        //ToDo: Display additional notification with icon
         Intent beaconServiceIntent = new Intent(context, BeaconService.class);
-        beaconServiceIntent.putExtra(MIN_DISTANCE_FOR_ALERT, minDistance);
-        //startService(beaconServiceIntent);
+        beaconServiceIntent.putExtra(MIN_DISTANCE_FOR_ALERT, 2.25);
+        startService(beaconServiceIntent);
+        beaconStarted = true;
     }
 
     private void stopBeacon()
     {
         Toast.makeText(context, "Beacon deaktiviert", Toast.LENGTH_SHORT).show();
-        //stopService(new Intent(context, BeaconService.class));
+        stopService(new Intent(context, BeaconService.class));
+        beaconStarted = false;
     }
 }
 
