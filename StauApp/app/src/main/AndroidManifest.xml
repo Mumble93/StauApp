@@ -59,6 +59,8 @@
         <service
             android:name=".BeaconService"
             android:exported="false"/>
+        <service android:name=".JamToServerService"
+            android:exported="false"/>
     </application>
 
 </manifest>

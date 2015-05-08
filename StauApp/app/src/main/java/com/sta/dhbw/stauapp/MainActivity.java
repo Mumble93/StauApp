@@ -40,7 +40,7 @@ public class MainActivity extends ActionBarActivity
     private static final String SENDER_ID = "821661182636";
 
     TextView mDisplay;
-    Button routeButton, jamListButton, startBeaconButton;
+    Button routeButton, jamListButton, beaconButton;
     GoogleCloudMessaging gcm;
 
     boolean beaconStarted = false;
@@ -58,7 +58,7 @@ public class MainActivity extends ActionBarActivity
         mDisplay = (TextView) findViewById(R.id.message_display);
         routeButton = (Button) findViewById(R.id.new_route);
         jamListButton = (Button) findViewById(R.id.view_traffic_issues);
-        startBeaconButton = (Button) findViewById(R.id.start_beacon);
+        beaconButton = (Button) findViewById(R.id.start_beacon);
 
         context = getApplicationContext();
 
@@ -80,7 +80,7 @@ public class MainActivity extends ActionBarActivity
             }
         });
 
-        startBeaconButton.setOnClickListener(new View.OnClickListener()
+        beaconButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
             public void onClick(View view)
@@ -315,6 +315,7 @@ public class MainActivity extends ActionBarActivity
         Intent beaconServiceIntent = new Intent(context, BeaconService.class);
         beaconServiceIntent.putExtra(MIN_DISTANCE_FOR_ALERT, 2.25);
         startService(beaconServiceIntent);
+        beaconButton.setText(R.string.stop_beacon_btn);
         beaconStarted = true;
     }
 
@@ -322,6 +323,7 @@ public class MainActivity extends ActionBarActivity
     {
         Toast.makeText(context, "Beacon deaktiviert", Toast.LENGTH_SHORT).show();
         stopService(new Intent(context, BeaconService.class));
+        beaconButton.setText(R.string.start_beacon_btn);
         beaconStarted = false;
     }
 }

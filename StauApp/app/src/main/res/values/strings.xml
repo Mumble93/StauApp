@@ -17,5 +17,6 @@
     <string name="splash_text">DHBW Stuttgart JamBeacon</string>
     <string name="enter_new_route">Neue Route erstellen</string>
     <string name="show_jams">Staus anzeigen</string>
-    <string name="start_beacon_btn">Beacon starten</string>
+    <string name="start_beacon_btn">Beacon Starten</string>
+    <string name="stop_beacon_btn">Beacon Anhalten</string>
 </resources>

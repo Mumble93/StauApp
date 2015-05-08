@@ -10,12 +10,17 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 
+import com.sta.dhbw.stauapp.jam.TrafficJam;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 public class BeaconService extends Service
 {
     /**
      * This class is subject to change. Remodeling to IntentService class in near future possible.
      */
-    public static final String TAG = BeaconService.class.getSimpleName();
+    private static final String TAG = BeaconService.class.getSimpleName();
 
     private static LocationManager locationManager;
     private static LocationListener locationListener;
@@ -59,8 +64,13 @@ public class BeaconService extends Service
                     return;
                 } else if (drivenDistanceBelowMinimum(lastLocation, location))
                 {
-                    Log.i(TAG, "Detected traffic jam at " + location.getLatitude() + " " + location.getLongitude());
-                    sendAlarmToServer();
+                    Date date = new Date();
+
+                    String msg = "Detected traffic jam at " + location.getLatitude() + " " + location.getLongitude();
+                    msg += "on " + new SimpleDateFormat("HH:mm:ss").format(date);
+
+                    Log.d(TAG, msg);
+                    sendTrafficJamToServer(new TrafficJam(location, date.getTime()));
                 }
 
                 Log.i(TAG, "Got new position: " + location.getLatitude() + " " + location.getLongitude());
@@ -128,8 +138,10 @@ public class BeaconService extends Service
         return results[0] < minDistance;
     }
 
-    private void sendAlarmToServer()
+    private void sendTrafficJamToServer(TrafficJam jam)
     {
-        //ToDo: Implement connecting to server and sending alert
+        Intent intent = new Intent(getApplicationContext(),JamToServerService.class);
+        intent.putExtra("jam", jam);
+        startService(intent);
     }
 }
