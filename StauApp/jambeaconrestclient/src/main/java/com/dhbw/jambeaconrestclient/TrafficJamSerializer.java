@@ -11,7 +11,7 @@ public final class TrafficJamSerializer
 {
     private static final String TAG = TrafficJamSerializer.class.getSimpleName();
 
-    public static JSONObject trafficJamToJson(TrafficJam trafficJam) throws JamBeaconException
+    public static String trafficJamToJson(TrafficJam trafficJam) throws JamBeaconException
     {
         JSONObject jamJson = new JSONObject();
         JSONObject locationObject = new JSONObject();
@@ -29,6 +29,6 @@ public final class TrafficJamSerializer
             throw new JamBeaconException(je.getMessage(), je);
         }
 
-        return jamJson;
+        return jamJson.toString();
     }
 }

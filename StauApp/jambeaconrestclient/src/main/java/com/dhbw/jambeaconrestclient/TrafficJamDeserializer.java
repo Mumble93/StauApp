@@ -15,7 +15,7 @@ public final class TrafficJamDeserializer
 {
     private static final String TAG = TrafficJamDeserializer.class.getSimpleName();
 
-    public static TrafficJam jsonToTrafficJam(JSONObject jsonObject) throws JamBeaconException
+    public static TrafficJam jsonToTrafficJam(String jsonString) throws JamBeaconException
     {
         Location location = new Location(LocationManager.GPS_PROVIDER);
         long timestamp;
@@ -23,6 +23,8 @@ public final class TrafficJamDeserializer
 
         try
         {
+            JSONObject jsonObject = new JSONObject(jsonString);
+
             JSONObject locationJson = jsonObject.getJSONObject("location");
             double longitude = locationJson.getDouble("longitude");
             double latitude = locationJson.getDouble("latitude");

@@ -6,12 +6,15 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.dhbw.jambeaconrestclient.JamBeaconRestClient;
 import com.dhbw.jambeaconrestclient.TrafficJam;
+import com.dhbw.jambeaconrestclient.exception.JamBeaconException;
 
-public class JamToServerService extends IntentService
+public final class JamToServerService extends IntentService
 {
     private static final String TAG = JamToServerService.class.getSimpleName();
 
+    private static JamBeaconRestClient client;
 
     public JamToServerService()
     {
@@ -23,6 +26,17 @@ public class JamToServerService extends IntentService
     {
         Log.i(TAG, "Sending traffic jam to server");
 
+        if (null == client)
+        {
+            synchronized (JamToServerService.class)
+            {
+                if (null == client)
+                {
+                    client = new JamBeaconRestClient();
+                }
+            }
+        }
+
         Bundle extras = intent.getExtras();
 
         if (!extras.isEmpty())
@@ -30,7 +44,6 @@ public class JamToServerService extends IntentService
             TrafficJam jam = extras.getParcelable("jam");
 
         }
-
 
 
     }

@@ -10,7 +10,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 
-import com.sta.dhbw.stauapp.jam.TrafficJam;
+import com.dhbw.jambeaconrestclient.TrafficJam;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
