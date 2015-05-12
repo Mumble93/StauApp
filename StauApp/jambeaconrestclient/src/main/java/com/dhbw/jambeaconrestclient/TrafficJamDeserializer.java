@@ -1,10 +1,10 @@
-package com.sta.dhbw.stauapp.jam;
+package com.dhbw.jambeaconrestclient;
 
 import android.location.Location;
 import android.location.LocationManager;
 import android.util.Log;
 
-import com.sta.dhbw.stauapp.exception.JamBeaconException;
+import com.dhbw.jambeaconrestclient.exception.JamBeaconException;
 
 import org.json.JSONException;
 import org.json.JSONObject;

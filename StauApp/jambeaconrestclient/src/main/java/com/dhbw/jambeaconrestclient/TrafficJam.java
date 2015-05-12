@@ -1,4 +1,4 @@
-package com.sta.dhbw.stauapp.jam;
+package com.dhbw.jambeaconrestclient;
 
 import android.location.Location;
 import android.location.LocationManager;
@@ -70,7 +70,7 @@ public class TrafficJam implements Parcelable
         dest.writeLong(timestamp);
     }
 
-    public static final Parcelable.Creator<TrafficJam> CREATOR = new Parcelable.Creator<TrafficJam>()
+    public static final Creator<TrafficJam> CREATOR = new Creator<TrafficJam>()
     {
         public TrafficJam createFromParcel(Parcel in)
         {
