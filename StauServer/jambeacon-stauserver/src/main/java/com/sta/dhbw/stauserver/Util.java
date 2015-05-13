@@ -1,38 +1,34 @@
 package com.sta.dhbw.stauserver;
 
-import android.location.Location;
-import android.location.LocationManager;
+
 import com.sta.dhbw.stauserver.db.RedisDao;
-import com.sta.dhbw.stauserver.model.TrafficJam;
+import com.sta.dhbw.stauserver.model.TrafficJamDTO;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public final class Util
+public class Util
 {
-    public static TrafficJam trafficJamFromMap(Map<String, String> attributes)
+    public static TrafficJamDTO trafficJamFromMap(Map<String, String> attributes)
     {
-        Location location = new Location(LocationManager.GPS_PROVIDER);
-        location.setLongitude(Double.parseDouble(attributes.get(RedisDao.JAM_LONGITUDE)));
-        location.setLatitude(Double.parseDouble(attributes.get(RedisDao.JAM_LATITUDE)));
+        double longitude = Double.parseDouble(attributes.get(RedisDao.JAM_LONGITUDE));
+        double latitude = Double.parseDouble(attributes.get(RedisDao.JAM_LATITUDE));
 
         long timestamp = Long.parseLong(attributes.get(RedisDao.JAM_TIME));
 
         UUID id = UUID.fromString(attributes.get(RedisDao.JAM_ID));
 
-        return new TrafficJam(location, timestamp, id);
+        return new TrafficJamDTO(longitude, latitude, timestamp, id);
     }
 
-    public static Map<String, String> trafficJamToMap(TrafficJam jam)
+    public static Map<String, String> trafficJamToMap(TrafficJamDTO jam)
     {
         HashMap<String, String> attributeMap = new HashMap<>();
 
-        Location location = jam.getLocation();
-
         attributeMap.put(RedisDao.JAM_ID, jam.getId().toString());
-        attributeMap.put(RedisDao.JAM_LONGITUDE, String.valueOf(location.getLongitude()));
-        attributeMap.put(RedisDao.JAM_LATITUDE, String.valueOf(location.getLatitude()));
+        attributeMap.put(RedisDao.JAM_LONGITUDE, String.valueOf(jam.getLongitude()));
+        attributeMap.put(RedisDao.JAM_LATITUDE, String.valueOf(jam.getLatitude()));
         attributeMap.put(RedisDao.JAM_TIME, String.valueOf(jam.getTimestamp()));
 
         return attributeMap;

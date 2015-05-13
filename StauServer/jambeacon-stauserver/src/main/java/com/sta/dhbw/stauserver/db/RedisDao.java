@@ -1,7 +1,9 @@
 package com.sta.dhbw.stauserver.db;
 
 import com.sta.dhbw.stauserver.Util;
-import com.sta.dhbw.stauserver.model.TrafficJam;
+import com.sta.dhbw.stauserver.model.TrafficJamDTO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 
 import java.util.ArrayList;
@@ -10,16 +12,19 @@ import java.util.Map;
 
 public class RedisDao
 {
+    private static final Logger log = LoggerFactory.getLogger(RedisDao.class);
+
     private Jedis jedis;
 
     public static final String JAM_ID = "id";
+    public static final String JAM_LOCATION = "location";
     public static final String JAM_LONGITUDE = "long";
     public static final String JAM_LATITUDE = "lat";
     public static final String JAM_TIME = "timestamp";
 
-    public static final String FIELD_JAM ="jam";
-    public static final String LIST_JAM = "jams";
-    public static final String LIST_USERS = "users";
+    private static final String FIELD_JAM ="jam:";
+    private static final String LIST_JAM = "jams";
+    private static final String LIST_USERS = "users";
 
     public RedisDao(String redisHost, int redisPort)
     {
@@ -31,21 +36,23 @@ public class RedisDao
         this("localhost", 6379);
     }
 
-    public TrafficJam getTrafficJam(String id)
+    public TrafficJamDTO getTrafficJam(String id)
     {
         Map<String, String> trafficJam = jedis.hgetAll(FIELD_JAM +id);
         return Util.trafficJamFromMap(trafficJam);
     }
 
-    public void storeTrafficJam (TrafficJam jam)
+    public void storeTrafficJam (TrafficJamDTO jam)
     {
-        jedis.hmset(FIELD_JAM+jam.getId().toString(), Util.trafficJamToMap(jam));
-        jedis.lpush(LIST_JAM, jam.getId().toString());
+        String jamId = jam.getId().toString();
+
+        jedis.hmset(FIELD_JAM+jamId, Util.trafficJamToMap(jam));
+        jedis.lpush(LIST_JAM, jamId);
     }
 
-    public List<TrafficJam> getAllTrafficJams()
+    public List<TrafficJamDTO> getAllTrafficJams()
     {
-        ArrayList<TrafficJam> resultList = new ArrayList<>();
+        ArrayList<TrafficJamDTO> resultList = new ArrayList<>();
 
         List<String> jamlist = jedis.lrange(LIST_JAM, 0, -1);
         for (String id : jamlist)
@@ -53,8 +60,13 @@ public class RedisDao
             Map<String, String> attributeMap = jedis.hgetAll(FIELD_JAM+id);
             resultList.add(Util.trafficJamFromMap(attributeMap));
         }
-
         return resultList;
+    }
+
+    public void deleteTrafficJam(String id)
+    {
+        jedis.del(FIELD_JAM+id);
+        jedis.lrem(LIST_JAM, 0, id);
     }
 
     public List<String> getRegisteredUsers()
@@ -65,5 +77,10 @@ public class RedisDao
     public void registerUser(String id)
     {
         jedis.lpush(LIST_USERS, id);
+    }
+
+    public void deleteUser(String id)
+    {
+        jedis.lrem(LIST_USERS, 0, id);
     }
 }
