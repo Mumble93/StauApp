@@ -21,6 +21,6 @@ public class SerializationTest
 
         TrafficJamDTO jam = new TrafficJamDTO(latitude, longitude, timestamp, id);
 
-        log.debug("Serialized Jam is: " + jam.toJsonObect());
+        log.debug("Serialized Jam is: " + jam.toJsonObject());
     }
 }

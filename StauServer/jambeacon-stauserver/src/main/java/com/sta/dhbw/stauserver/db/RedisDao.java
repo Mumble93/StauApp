@@ -1,6 +1,6 @@
 package com.sta.dhbw.stauserver.db;
 
-import com.sta.dhbw.stauserver.Util;
+import com.sta.dhbw.stauserver.util.Util;
 import com.sta.dhbw.stauserver.model.TrafficJamDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,12 +15,6 @@ public class RedisDao
     private static final Logger log = LoggerFactory.getLogger(RedisDao.class);
 
     private Jedis jedis;
-
-    public static final String JAM_ID = "id";
-    public static final String JAM_LOCATION = "location";
-    public static final String JAM_LONGITUDE = "long";
-    public static final String JAM_LATITUDE = "lat";
-    public static final String JAM_TIME = "timestamp";
 
     private static final String FIELD_JAM ="jam:";
     private static final String LIST_JAM = "jams";
@@ -74,13 +68,13 @@ public class RedisDao
         return jedis.lrange(LIST_USERS, 0, -1);
     }
 
-    public void registerUser(String id)
+    public long createUser(String id)
     {
-        jedis.lpush(LIST_USERS, id);
+         return jedis.lpush(LIST_USERS, id);
     }
 
-    public void deleteUser(String id)
+    public long deleteUser(String id)
     {
-        jedis.lrem(LIST_USERS, 0, id);
+        return jedis.lrem(LIST_USERS, 0, id);
     }
 }

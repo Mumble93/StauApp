@@ -1,6 +1,6 @@
 package com.sta.dhbw.stauserver.model;
 
-import com.sta.dhbw.stauserver.db.RedisDao;
+import com.sta.dhbw.stauserver.util.Constants;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -62,14 +62,14 @@ public class TrafficJamDTO implements Serializable
         return id;
     }
 
-    public JsonObject toJsonObect()
+    public JsonObject toJsonObject()
     {
         return Json.createObjectBuilder()
-                .add(RedisDao.JAM_ID, getId().toString())
-                .add(RedisDao.JAM_LOCATION, Json.createObjectBuilder()
-                        .add(RedisDao.JAM_LONGITUDE, getLongitude())
-                        .add(RedisDao.JAM_LATITUDE, getLatitude()).build())
-                .add(RedisDao.JAM_TIME, getTimestamp()).build();
+                .add(Constants.JAM_ID, getId().toString())
+                .add(Constants.JAM_LOCATION, Json.createObjectBuilder()
+                        .add(Constants.JAM_LONGITUDE, getLongitude())
+                        .add(Constants.JAM_LATITUDE, getLatitude()).build())
+                .add(Constants.JAM_TIME, getTimestamp()).build();
     }
 
 }
