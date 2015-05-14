@@ -9,8 +9,9 @@ import redis.clients.jedis.Jedis;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-public class RedisDao
+public class RedisDao implements IBeaconDb
 {
     private static final Logger log = LoggerFactory.getLogger(RedisDao.class);
 
@@ -18,7 +19,7 @@ public class RedisDao
 
     private static final String FIELD_JAM ="jam:";
     private static final String LIST_JAM = "jams";
-    private static final String LIST_USERS = "users";
+    private static final String SET_USERS = "users";
 
     public RedisDao(String redisHost, int redisPort)
     {
@@ -30,12 +31,14 @@ public class RedisDao
         this("localhost", 6379);
     }
 
+    @Override
     public TrafficJamDTO getTrafficJam(String id)
     {
         Map<String, String> trafficJam = jedis.hgetAll(FIELD_JAM +id);
         return Util.trafficJamFromMap(trafficJam);
     }
 
+    @Override
     public void storeTrafficJam (TrafficJamDTO jam)
     {
         String jamId = jam.getId().toString();
@@ -44,7 +47,14 @@ public class RedisDao
         jedis.lpush(LIST_JAM, jamId);
     }
 
-    public List<TrafficJamDTO> getAllTrafficJams()
+    @Override
+    public void updateTrafficJam(TrafficJamDTO trafficJam)
+    {
+
+    }
+
+    @Override
+    public List<TrafficJamDTO> getTrafficJamList()
     {
         ArrayList<TrafficJamDTO> resultList = new ArrayList<>();
 
@@ -57,24 +67,28 @@ public class RedisDao
         return resultList;
     }
 
+    @Override
     public void deleteTrafficJam(String id)
     {
         jedis.del(FIELD_JAM+id);
         jedis.lrem(LIST_JAM, 0, id);
     }
 
-    public List<String> getRegisteredUsers()
+    @Override
+    public Set<String> getRegisteredUsers()
     {
-        return jedis.lrange(LIST_USERS, 0, -1);
+        return jedis.smembers(SET_USERS);
     }
 
+    @Override
     public long createUser(String id)
     {
-         return jedis.lpush(LIST_USERS, id);
+         return jedis.sadd(SET_USERS, id);
     }
 
+    @Override
     public long deleteUser(String id)
     {
-        return jedis.lrem(LIST_USERS, 0, id);
+        return jedis.srem(SET_USERS, id);
     }
 }

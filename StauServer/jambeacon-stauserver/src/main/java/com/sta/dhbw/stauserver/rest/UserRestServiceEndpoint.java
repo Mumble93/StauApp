@@ -26,10 +26,14 @@ public class UserRestServiceEndpoint
         String logMessage;
 
         long result = dao.createUser(userId);
-        if (result >= 0)
+        if (result > 0)
         {
             status = Status.CREATED;
             logMessage = "Registered new User with Id: " + userId;
+        } else if (result == 0)
+        {
+            status = Status.CONFLICT;
+            logMessage = "User already registered with " + userId;
         } else
         {
             status = Status.BAD_REQUEST;
@@ -41,10 +45,12 @@ public class UserRestServiceEndpoint
         return Response.status(status).build();
     }
 
-    @Path("unregister/{userId}")
+    @Path("unregister")
     @DELETE
-    public Response unregisterUser(@PathParam("userId") String userId)
+    public Response unregisterUser(UserDTO user)
     {
+        String userId = user.getUserId();
+
         long result = dao.deleteUser(userId);
         Status status;
         if (1 == result)
