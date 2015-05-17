@@ -1,4 +1,4 @@
-package com.dhbw.jambeaconrestclient.exception;
+package com.sta.dhbw.jambeaconrestclient.exception;
 
 public class JamBeaconException extends Exception
 {

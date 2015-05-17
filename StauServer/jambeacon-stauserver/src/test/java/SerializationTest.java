@@ -1,4 +1,4 @@
-import com.sta.dhbw.stauserver.model.TrafficJamDTO;
+import com.sta.dhbw.stauserver.model.TrafficJamModel;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +19,7 @@ public class SerializationTest
         long timestamp = new Date().getTime();
         UUID id = UUID.randomUUID();
 
-        TrafficJamDTO jam = new TrafficJamDTO(latitude, longitude, timestamp, id);
+        TrafficJamModel jam = new TrafficJamModel(latitude, longitude, timestamp, id, "testUser1");
 
         log.debug("Serialized Jam is: " + jam.toJsonObject());
     }

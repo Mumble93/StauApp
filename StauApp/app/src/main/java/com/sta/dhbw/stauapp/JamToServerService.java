@@ -6,9 +6,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
-import com.dhbw.jambeaconrestclient.JamBeaconRestClient;
-import com.dhbw.jambeaconrestclient.TrafficJam;
-import com.dhbw.jambeaconrestclient.exception.JamBeaconException;
+import com.sta.dhbw.jambeaconrestclient.JamBeaconRestClient;
+import com.sta.dhbw.jambeaconrestclient.TrafficJam;
 
 public final class JamToServerService extends IntentService
 {

@@ -1,4 +1,4 @@
-package com.dhbw.jambeaconrestclient;
+package com.sta.dhbw.jambeaconrestclient;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

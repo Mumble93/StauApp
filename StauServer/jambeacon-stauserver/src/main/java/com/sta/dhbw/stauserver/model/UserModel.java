@@ -4,16 +4,20 @@ import com.sta.dhbw.stauserver.util.Constants;
 
 import javax.json.Json;
 import javax.json.JsonObject;
+import java.io.Serializable;
 
-public class UserDTO
+public class UserModel implements Serializable
 {
     private String userId;
 
-    public UserDTO(){}
+    private String userIdHash;
 
-    public UserDTO(String userId)
+    public UserModel(){}
+
+    public UserModel(String userId, String userIdHash)
     {
         this.userId = userId;
+        this.userIdHash = userIdHash;
     }
 
     public String getUserId()
@@ -24,6 +28,16 @@ public class UserDTO
     public void setUserId(String userId)
     {
         this.userId = userId;
+    }
+
+    public String getUserIdHash()
+    {
+        return userIdHash;
+    }
+
+    public void setUserIdHash(String userIdHash)
+    {
+        this.userIdHash = userIdHash;
     }
 
     public JsonObject toJsonObject()

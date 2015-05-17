@@ -1,7 +1,7 @@
 package com.sta.dhbw.stauserver.util;
 
 
-import com.sta.dhbw.stauserver.model.TrafficJamDTO;
+import com.sta.dhbw.stauserver.model.TrafficJamModel;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,7 +20,7 @@ public class Util
         return id.matches(validUUIDRegex);
     }
 
-    public static TrafficJamDTO trafficJamFromMap(Map<String, String> attributes)
+    public static TrafficJamModel trafficJamFromMap(Map<String, String> attributes)
     {
         double longitude = Double.parseDouble(attributes.get(Constants.JAM_LONGITUDE));
         double latitude = Double.parseDouble(attributes.get(Constants.JAM_LATITUDE));
@@ -29,14 +29,17 @@ public class Util
 
         UUID id = UUID.fromString(attributes.get(Constants.JAM_ID));
 
-        return new TrafficJamDTO(longitude, latitude, timestamp, id);
+        String owner = attributes.get(attributes.get(Constants.JAM_OWNER));
+
+        return new TrafficJamModel(longitude, latitude, timestamp, id, owner);
     }
 
-    public static Map<String, String> trafficJamToMap(TrafficJamDTO jam)
+    public static Map<String, String> trafficJamToMap(TrafficJamModel jam)
     {
         HashMap<String, String> attributeMap = new HashMap<>();
 
-        attributeMap.put(Constants.JAM_ID, jam.getId().toString());
+        attributeMap.put(Constants.JAM_ID, jam.getJamId().toString());
+        attributeMap.put(Constants.JAM_OWNER, jam.getOwner());
         attributeMap.put(Constants.JAM_LONGITUDE, String.valueOf(jam.getLongitude()));
         attributeMap.put(Constants.JAM_LATITUDE, String.valueOf(jam.getLatitude()));
         attributeMap.put(Constants.JAM_TIME, String.valueOf(jam.getTimestamp()));

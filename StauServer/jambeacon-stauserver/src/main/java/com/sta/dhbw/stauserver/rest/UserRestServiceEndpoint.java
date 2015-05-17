@@ -1,7 +1,8 @@
 package com.sta.dhbw.stauserver.rest;
 
+import com.sta.dhbw.stauserver.db.IBeaconDb;
 import com.sta.dhbw.stauserver.db.RedisDao;
-import com.sta.dhbw.stauserver.model.UserDTO;
+import com.sta.dhbw.stauserver.model.UserModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,28 +14,33 @@ import javax.ws.rs.core.Response.Status;
 public class UserRestServiceEndpoint
 {
     private static final Logger log = LoggerFactory.getLogger(UserRestServiceEndpoint.class);
-    private RedisDao dao = new RedisDao();
+    private IBeaconDb dao = new RedisDao();
 
     @Path("register")
     @POST
     @Consumes("application/json")
-    public Response registerUser(UserDTO user)
+    public Response registerUser(UserModel user)
     {
         String userId = user.getUserId();
 
         Status status;
         String logMessage;
 
-        long result = dao.createUser(userId);
+        long result = dao.createUser(userId, user.getUserIdHash());
+        //User was added to set
         if (result > 0)
         {
             status = Status.CREATED;
             logMessage = "Registered new User with Id: " + userId;
-        } else if (result == 0)
+        }
+        //User was already contained in set
+        else if (result == 0)
         {
             status = Status.CONFLICT;
             logMessage = "User already registered with " + userId;
-        } else
+        }
+        //Adding User failed due to other reasons
+        else
         {
             status = Status.BAD_REQUEST;
             logMessage = "Error registering new User. Tried with Id: " + userId;
@@ -47,20 +53,23 @@ public class UserRestServiceEndpoint
 
     @Path("unregister")
     @DELETE
-    public Response unregisterUser(UserDTO user)
+    @Consumes("application/json")
+    public Response unregisterUser(UserModel user)
     {
         String userId = user.getUserId();
+        Status status = Status.OK;
 
-        long result = dao.deleteUser(userId);
-        Status status;
-        if (1 == result)
+        try
         {
-            status = Status.OK;
-            log.info("Unregistered user " + userId);
-        } else
+            dao.deleteUser(userId, user.getUserIdHash());
+        } catch (NotFoundException e)
         {
             status = Status.NOT_FOUND;
         }
+
+        log.info("Unregistered user " + userId);
+
+
         return Response.status(status).build();
     }
 }

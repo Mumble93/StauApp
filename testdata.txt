@@ -1,0 +1,8 @@
+Lat;Long;Time
+//Kreuz Stuttgart
+48.727400;9.060760;1431695874
+//Leonberger Dreieck
+48.782628;9.008317;1431695874
+//zwischen Karlsbad und Pforzheim
+48.912311;8.621221;1431695874
+

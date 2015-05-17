@@ -1,4 +1,4 @@
-package com.dhbw.jambeaconrestclient;
+package com.sta.dhbw.jambeaconrestclient;
 
 import android.location.Location;
 import android.location.LocationManager;

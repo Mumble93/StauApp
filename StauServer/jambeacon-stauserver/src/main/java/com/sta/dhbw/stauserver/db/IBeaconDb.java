@@ -1,19 +1,21 @@
 package com.sta.dhbw.stauserver.db;
 
-import com.sta.dhbw.stauserver.model.TrafficJamDTO;
+import com.sta.dhbw.stauserver.exception.StauserverException;
+import com.sta.dhbw.stauserver.model.TrafficJamModel;
 
+import javax.ws.rs.NotFoundException;
 import java.util.List;
 import java.util.Set;
 
 public interface IBeaconDb
 {
-    TrafficJamDTO getTrafficJam(String id);
-    void storeTrafficJam (TrafficJamDTO trafficJam);
-    List<TrafficJamDTO> getTrafficJamList();
-    void updateTrafficJam (TrafficJamDTO trafficJam);
-    void deleteTrafficJam(String id);
+    TrafficJamModel getTrafficJam(String id) throws NotFoundException;
+    void storeTrafficJam (TrafficJamModel trafficJam) throws StauserverException;
+    List<TrafficJamModel> getTrafficJamList();
+    void updateTrafficJam (TrafficJamModel trafficJam);
+    void deleteTrafficJam(String id) throws NotFoundException;
 
-    long createUser(String id);
-    long deleteUser(String id);
+    long createUser(String id, String hash);
+    void deleteUser(String id, String hash) throws NotFoundException;
     Set<String> getRegisteredUsers();
 }
