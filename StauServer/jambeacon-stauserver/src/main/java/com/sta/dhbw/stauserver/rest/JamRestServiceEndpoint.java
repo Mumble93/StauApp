@@ -62,24 +62,29 @@ public class JamRestServiceEndpoint
         if (requestId == null || requestId.isEmpty())
         {
             return Response.status(Status.EXPECTATION_FAILED).entity("X-Request-Id must be set in header.").build();
+        } else if (!dao.userIsRegistered(requestId))
+        {
+            return Response.status(Status.UNAUTHORIZED).build();
         } else
         {
-            if (trafficJamModel.getJamId() != null)
             {
-                return Response.status(Status.BAD_REQUEST).entity("Id must not be set in post request.").build();
-            }
+                if (trafficJamModel.getJamId() != null)
+                {
+                    return Response.status(Status.BAD_REQUEST).entity("Id must not be set in post request.").build();
+                }
 
-            trafficJamModel.setOwner(requestId);
-            trafficJamModel.setJamId(UUID.randomUUID());
+                trafficJamModel.setOwner(requestId);
+                trafficJamModel.setJamId(UUID.randomUUID());
 
-            try
-            {
-                dao.storeTrafficJam(trafficJamModel);
-            } catch (StauserverException e)
-            {
-                return Response.status(Status.BAD_REQUEST).entity(Entity.json(trafficJamModel)).build();
+                try
+                {
+                    dao.storeTrafficJam(trafficJamModel);
+                } catch (StauserverException e)
+                {
+                    return Response.status(Status.BAD_REQUEST).entity(Entity.json(trafficJamModel)).build();
+                }
+                return Response.status(Status.CREATED).entity(Entity.json(trafficJamModel)).build();
             }
-            return Response.status(Status.CREATED).entity(Entity.json(trafficJamModel)).build();
         }
     }
 
@@ -88,6 +93,14 @@ public class JamRestServiceEndpoint
     @Produces("application/json")
     public Response updateJam(@HeaderParam("X-Request-Id") String requestId, TrafficJamModel trafficJamModel) throws StauserverException
     {
+        if (null == requestId || requestId.isEmpty())
+        {
+            return Response.status(Status.EXPECTATION_FAILED).entity("X-Request-Id must be set in header.").build();
+        } else if (!dao.userIsRegistered(requestId))
+        {
+            return Response.status(Status.UNAUTHORIZED).build();
+        }
+
         TrafficJamModel existingJam;
 
         //Try retrieving the existing jam. Adhering to REST specification, call of PUT method on non-existing
@@ -123,6 +136,9 @@ public class JamRestServiceEndpoint
         if (null == requestId || requestId.isEmpty())
         {
             return Response.status(Status.EXPECTATION_FAILED).entity("X-Request-Id header must be set.").build();
+        } else if (!dao.userIsRegistered(requestId))
+        {
+            return Response.status(Status.UNAUTHORIZED).build();
         }
 
         TrafficJamModel jam = dao.getTrafficJam(id);

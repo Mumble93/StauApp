@@ -7,6 +7,8 @@ import com.sta.dhbw.stauserver.model.TrafficJamModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Response;
+import redis.clients.jedis.Transaction;
 
 import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
@@ -25,7 +27,7 @@ public class RedisDao implements IBeaconDb
     private static final String FIELD_JAM = "jam:";
     private static final String LIST_JAM = "jams";
     private static final String SET_USERS = "users";
-    private static final String USER_HASH = "user:%s:hash";
+    private static final String USER_HASH_SET = "users:hashes";
 
     public RedisDao(String redisHost, int redisPort)
     {
@@ -43,7 +45,7 @@ public class RedisDao implements IBeaconDb
         Map<String, String> trafficJam = jedis.hgetAll(FIELD_JAM + id);
         if (trafficJam.isEmpty())
         {
-           return null;
+            return null;
         }
         return Util.trafficJamFromMap(trafficJam);
     }
@@ -67,21 +69,30 @@ public class RedisDao implements IBeaconDb
     {
         String jamId = jam.getJamId().toString();
 
-        String hashSet = jedis.hmset(FIELD_JAM + jamId, Util.trafficJamToMap(jam));
-        if (hashSet.equals(REDIS_RESPONSE_OK))
+        Transaction transaction = jedis.multi();
+        transaction.hmset(FIELD_JAM + jamId, Util.trafficJamToMap(jam));
+        transaction.lpush(LIST_JAM, jamId);
+        transaction.expire(FIELD_JAM + jamId, 600);
+
+        List<Response<?>> responses = transaction.execGetResponse();
+        for (Response<?> response : responses)
         {
-            //Redis replies with the number of elements in the list after push operation
-            //Therefore, result of push operation should never be less zero
-            long pushResponse = jedis.lpush(LIST_JAM, jamId);
-            if(pushResponse<0)
+            if (response.get() instanceof String)
             {
-                String error = "Error storing new Traffic Jam with params: \n" + jam.toJsonObject().toString();
-                throw new StauserverException(error);
+                if (!response.get().equals(REDIS_RESPONSE_OK))
+                {
+                    String error = "Error storing new Traffic Jam. Redis response was " + response.get();
+                    throw new StauserverException(error);
+                }
             }
-        } else
-        {
-            String error = "Error storing new Traffic Jam. Redis response was " + hashSet;
-            throw new StauserverException(error);
+            if (response.get() instanceof Long)
+            {
+                if ((Long) response.get() < 0L)
+                {
+                    String error = "Error storing new Traffic Jam with params: \n" + jam.toJsonObject().toString();
+                    throw new StauserverException(error);
+                }
+            }
         }
 
         log.info("Created new Traffic Jam with id: " + jamId);
@@ -100,7 +111,12 @@ public class RedisDao implements IBeaconDb
         existingJamValues.put(Constants.JAM_LONGITUDE, updatedJamValues.get(Constants.JAM_LONGITUDE));
         existingJamValues.put(Constants.JAM_TIME, updatedJamValues.get(Constants.JAM_TIME));
 
-        jedis.hmset(jamId, existingJamValues);
+        Transaction transaction = jedis.multi();
+
+        transaction.hmset(jamId, existingJamValues);
+        transaction.expire(jamId, 600);
+
+        transaction.exec();
 
         log.info("Updated Traffic Jam with Id: " + jamId);
     }
@@ -108,13 +124,23 @@ public class RedisDao implements IBeaconDb
     @Override
     public void deleteTrafficJam(String id) throws NotFoundException
     {
-        //Number of keys removed should be 1 in both operations
-        long deleteJamResult = jedis.del(FIELD_JAM + id);
-        long deleteJamFromListResult = jedis.lrem(LIST_JAM, 0, id);
+        Transaction transaction = jedis.multi();
 
-        if(deleteJamFromListResult != 1 && deleteJamResult != 1)
+        //Number of keys removed should be 1 in both operations
+        transaction.del(FIELD_JAM + id);
+        transaction.lrem(LIST_JAM, 0, id);
+
+        List<Response<?>> responses = transaction.execGetResponse();
+
+        for (Response response : responses)
         {
-            throw new NotFoundException("Deletion of Traffic Jam failed.");
+            if (response.get() instanceof Long)
+            {
+                if ((Long) response.get() != 1L)
+                {
+                    throw new NotFoundException("Deletion of Traffic Jam failed.");
+                }
+            }
         }
 
         log.info("Deleted Traffic Jam with Id: " + id);
@@ -130,16 +156,32 @@ public class RedisDao implements IBeaconDb
     @Override
     public long createUser(String id, String hash)
     {
-        jedis.set(String.format(USER_HASH, id), hash);
-        return jedis.sadd(SET_USERS, id);
+        Transaction transaction = jedis.multi();
+        transaction.sadd(USER_HASH_SET, hash);
+        transaction.sadd(SET_USERS, id);
+
+        List<Response<?>> responses = transaction.execGetResponse();
+        return (Long)responses.get(0).get() & (Long)responses.get(1).get();
     }
 
     @Override
     public void deleteUser(String id, String hash) throws NotFoundException
     {
-        if(jedis.srem(SET_USERS, id) != 1 && jedis.del(String.format(USER_HASH, id)) != 1)
+        Transaction transaction = jedis.multi();
+        transaction.srem(SET_USERS, id);
+        transaction.srem(USER_HASH_SET, hash);
+
+        List<Response<?>> responses = transaction.execGetResponse();
+
+        if (((Long)responses.get(0).get() & (Long)responses.get(1).get()) != 1)
         {
             throw new NotFoundException("Could not delete user " + id);
         }
+    }
+
+    @Override
+    public boolean userIsRegistered(String hash)
+    {
+        return jedis.sismember(USER_HASH_SET, hash);
     }
 }
