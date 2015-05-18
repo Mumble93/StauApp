@@ -11,14 +11,21 @@ public class TrafficJamDTO implements Serializable
 {
     private double longitude, latitude;
     private long timestamp;
+
+    public void setId(UUID id)
+    {
+        this.id = id;
+    }
+
     private UUID id;
 
-    public TrafficJamDTO(double longitude, double latitude, long timestamp)
+    public TrafficJamDTO(double longitude, double latitude, long timestamp, UUID id)
     {
 
         this.longitude = longitude;
         this.latitude = latitude;
         this.timestamp = timestamp;
+        this.id = id;
     }
 
     public TrafficJamDTO(){}

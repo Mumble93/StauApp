@@ -38,13 +38,12 @@ public class RedisDao implements IBeaconDb
     }
 
     @Override
-    public TrafficJamModel getTrafficJam(String id) throws NotFoundException
+    public TrafficJamModel getTrafficJam(String id)
     {
         Map<String, String> trafficJam = jedis.hgetAll(FIELD_JAM + id);
         if (trafficJam.isEmpty())
         {
-            String error = "Error retrieving Traffic Jam with Id " + id;
-            throw new NotFoundException(error);
+           return null;
         }
         return Util.trafficJamFromMap(trafficJam);
     }

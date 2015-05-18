@@ -3,6 +3,8 @@ package com.sta.dhbw.stauserver.util;
 
 import com.sta.dhbw.stauserver.model.TrafficJamModel;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -29,7 +31,7 @@ public class Util
 
         UUID id = UUID.fromString(attributes.get(Constants.JAM_ID));
 
-        String owner = attributes.get(attributes.get(Constants.JAM_OWNER));
+        String owner = attributes.get(Constants.JAM_OWNER);
 
         return new TrafficJamModel(longitude, latitude, timestamp, id, owner);
     }
@@ -47,4 +49,23 @@ public class Util
         return attributeMap;
 
     }
+
+
+    public static String hash256(String data) throws NoSuchAlgorithmException
+    {
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        md.update(data.getBytes());
+        return bytesToHex(md.digest());
+    }
+
+    public static String bytesToHex(byte[] bytes)
+    {
+        StringBuilder result = new StringBuilder();
+        for (byte byt : bytes)
+        {
+            result.append(Integer.toString((byt & 0xff) + 0x100, 16).substring(1));
+        }
+        return result.toString();
+    }
+
 }

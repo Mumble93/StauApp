@@ -1,5 +1,6 @@
 package com.sta.dhbw.stauserver.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.sta.dhbw.stauserver.util.Constants;
 
 import javax.json.Json;
@@ -7,12 +8,13 @@ import javax.json.JsonObject;
 import java.io.Serializable;
 import java.util.UUID;
 
+@JsonIgnoreProperties({"owner"})
 public class TrafficJamModel implements Serializable
 {
     private double longitude, latitude;
     private long timestamp;
     private UUID jamId;
-    private transient String owner;
+    private String owner;
 
     public TrafficJamModel(double longitude, double latitude, long timestamp, UUID jamId, String owner)
     {

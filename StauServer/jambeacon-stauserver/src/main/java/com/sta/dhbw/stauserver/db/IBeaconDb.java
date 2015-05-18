@@ -9,7 +9,7 @@ import java.util.Set;
 
 public interface IBeaconDb
 {
-    TrafficJamModel getTrafficJam(String id) throws NotFoundException;
+    TrafficJamModel getTrafficJam(String id);
     void storeTrafficJam (TrafficJamModel trafficJam) throws StauserverException;
     List<TrafficJamModel> getTrafficJamList();
     void updateTrafficJam (TrafficJamModel trafficJam);

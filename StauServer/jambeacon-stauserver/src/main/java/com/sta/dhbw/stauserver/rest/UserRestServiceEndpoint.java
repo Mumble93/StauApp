@@ -3,12 +3,15 @@ package com.sta.dhbw.stauserver.rest;
 import com.sta.dhbw.stauserver.db.IBeaconDb;
 import com.sta.dhbw.stauserver.db.RedisDao;
 import com.sta.dhbw.stauserver.model.UserModel;
+import com.sta.dhbw.stauserver.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+
+import java.security.NoSuchAlgorithmException;
 
 @Path("users")
 public class UserRestServiceEndpoint
@@ -19,14 +22,16 @@ public class UserRestServiceEndpoint
     @Path("register")
     @POST
     @Consumes("application/json")
-    public Response registerUser(UserModel user)
+    @Produces("text/plain")
+    public Response registerUser(UserModel user) throws NoSuchAlgorithmException
     {
         String userId = user.getUserId();
+        String userIdHash = Util.hash256(userId);
 
         Status status;
         String logMessage;
 
-        long result = dao.createUser(userId, user.getUserIdHash());
+        long result = dao.createUser(userId, userIdHash);
         //User was added to set
         if (result > 0)
         {
@@ -48,20 +53,29 @@ public class UserRestServiceEndpoint
 
         log.info(logMessage);
 
-        return Response.status(status).build();
+        Response response;
+        if (status == Status.CREATED)
+        {
+            response = Response.status(status).entity(userIdHash).build();
+        } else
+        {
+            response = Response.status(status).build();
+        }
+
+        return response;
     }
 
     @Path("unregister")
     @DELETE
     @Consumes("application/json")
-    public Response unregisterUser(UserModel user)
+    public Response unregisterUser(UserModel user) throws NoSuchAlgorithmException
     {
         String userId = user.getUserId();
         Status status = Status.OK;
 
         try
         {
-            dao.deleteUser(userId, user.getUserIdHash());
+            dao.deleteUser(userId, Util.hash256(userId));
         } catch (NotFoundException e)
         {
             status = Status.NOT_FOUND;
