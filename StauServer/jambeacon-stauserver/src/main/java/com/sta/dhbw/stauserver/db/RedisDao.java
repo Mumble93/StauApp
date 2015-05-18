@@ -7,6 +7,7 @@ import com.sta.dhbw.stauserver.model.TrafficJamModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPubSub;
 import redis.clients.jedis.Response;
 import redis.clients.jedis.Transaction;
 
@@ -23,6 +24,7 @@ public class RedisDao implements IBeaconDb
     private Jedis jedis;
 
     private static final String REDIS_RESPONSE_OK = "OK";
+    private static final String REDIS_KEYEVENT_CHANNEL = "__keyevent@0__:expired";
 
     private static final String FIELD_JAM = "jam:";
     private static final String LIST_JAM = "jams";
@@ -32,6 +34,9 @@ public class RedisDao implements IBeaconDb
     public RedisDao(String redisHost, int redisPort)
     {
         this.jedis = new Jedis(redisHost, redisPort);
+
+        (new Thread(new ListenerRunnable(redisHost, redisPort))).start();
+
     }
 
     public RedisDao()
@@ -161,7 +166,7 @@ public class RedisDao implements IBeaconDb
         transaction.sadd(SET_USERS, id);
 
         List<Response<?>> responses = transaction.execGetResponse();
-        return (Long)responses.get(0).get() & (Long)responses.get(1).get();
+        return (Long) responses.get(0).get() & (Long) responses.get(1).get();
     }
 
     @Override
@@ -173,7 +178,7 @@ public class RedisDao implements IBeaconDb
 
         List<Response<?>> responses = transaction.execGetResponse();
 
-        if (((Long)responses.get(0).get() & (Long)responses.get(1).get()) != 1)
+        if (((Long) responses.get(0).get() & (Long) responses.get(1).get()) != 1)
         {
             throw new NotFoundException("Could not delete user " + id);
         }
@@ -184,4 +189,61 @@ public class RedisDao implements IBeaconDb
     {
         return jedis.sismember(USER_HASH_SET, hash);
     }
+
+    private class ListenerRunnable implements Runnable
+    {
+        private String redisHost;
+        private int redisPort;
+
+        public ListenerRunnable(String redisHost, int redisPort)
+        {
+            this.redisHost = redisHost;
+            this.redisPort = redisPort;
+        }
+
+        @Override
+        public void run()
+        {
+            Jedis listenerJedis = new Jedis(redisHost, redisPort);
+            ExpiredListener listener = new ExpiredListener();
+            listenerJedis.subscribe(listener, REDIS_KEYEVENT_CHANNEL);
+        }
+    }
+
+    private class ExpiredListener extends JedisPubSub
+    {
+        private final Logger log = LoggerFactory.getLogger(ExpiredListener.class);
+
+        public void onMessage(String channel, String message)
+        {
+            String[] messageAttributes = message.split(":");
+            String trafficJamId = messageAttributes[1];
+            jedis.lrem(LIST_JAM, 0, trafficJamId);
+            log.info("Jam " + trafficJamId + " expired and was removed from List");
+        }
+
+        public void onSubscribe(String channel, int subscribedChannels)
+        {
+            log.info("Subscribed to channel " + channel);
+        }
+
+        public void onUnsubscribe(String channel, int subscribedChannels)
+        {
+        }
+
+        public void onPSubscribe(String pattern, int subscribedChannels)
+        {
+        }
+
+        public void onPUnsubscribe(String pattern, int subscribedChannels)
+        {
+        }
+
+        public void onPMessage(String pattern, String channel,
+                               String message)
+        {
+        }
+    }
 }
+
+
