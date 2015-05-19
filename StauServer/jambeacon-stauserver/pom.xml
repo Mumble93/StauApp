@@ -78,12 +78,16 @@
                 <version>2.3</version>
                 <configuration>
                     <failOnMissingWebXml>false</failOnMissingWebXml>
+                    <warName>ROOT</warName>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.wildfly.plugins</groupId>
                 <artifactId>wildfly-maven-plugin</artifactId>
                 <version>1.0.2.Final</version>
+                <configuration>
+                    <filename>ROOT.war</filename>
+                </configuration>
                 <executions>
                     <execution>
                         <id>undeploy</id>
