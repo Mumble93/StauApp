@@ -1,9 +1,10 @@
 package com.sta.dhbw.stauserver.db;
 
+import com.google.gson.Gson;
 import com.sta.dhbw.stauserver.exception.StauserverException;
 import com.sta.dhbw.stauserver.util.Constants;
 import com.sta.dhbw.stauserver.util.Util;
-import com.sta.dhbw.stauserver.model.TrafficJamModel;
+import com.sta.dhbw.stauserver.resource.TrafficJamResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
@@ -29,12 +30,22 @@ public class RedisDao implements IBeaconDb
     private static final String FIELD_JAM = "jam:";
     private static final String LIST_JAM = "jams";
     private static final String SET_USERS = "users";
+    private static final String RECIPIENT_STRING = "recipients";
     private static final String USER_HASH_SET = "users:hashes";
 
     public RedisDao(String redisHost, int redisPort)
     {
         this.jedis = new Jedis(redisHost, redisPort);
 
+        Set<String> registeredUsers = getRegisteredUsers();
+
+        if (jedis.exists(SET_USERS) && !registeredUsers.isEmpty())
+        {
+            recalculateRecipients();
+        }
+
+        //The subscribe operation blocks the thread it is called on
+        //So it has to be started on a new thread
         (new Thread(new ListenerRunnable(redisHost, redisPort))).start();
 
     }
@@ -45,7 +56,7 @@ public class RedisDao implements IBeaconDb
     }
 
     @Override
-    public TrafficJamModel getTrafficJam(String id)
+    public TrafficJamResource getTrafficJam(String id)
     {
         Map<String, String> trafficJam = jedis.hgetAll(FIELD_JAM + id);
         if (trafficJam.isEmpty())
@@ -56,9 +67,9 @@ public class RedisDao implements IBeaconDb
     }
 
     @Override
-    public List<TrafficJamModel> getTrafficJamList()
+    public List<TrafficJamResource> getTrafficJamList()
     {
-        ArrayList<TrafficJamModel> resultList = new ArrayList<>();
+        ArrayList<TrafficJamResource> resultList = new ArrayList<>();
 
         List<String> jamlist = jedis.lrange(LIST_JAM, 0, -1);
         for (String id : jamlist)
@@ -70,7 +81,7 @@ public class RedisDao implements IBeaconDb
     }
 
     @Override
-    public void storeTrafficJam(TrafficJamModel jam) throws StauserverException
+    public void storeTrafficJam(TrafficJamResource jam) throws StauserverException
     {
         String jamId = jam.getJamId().toString();
 
@@ -104,7 +115,7 @@ public class RedisDao implements IBeaconDb
     }
 
     @Override
-    public void updateTrafficJam(TrafficJamModel trafficJam)
+    public void updateTrafficJam(TrafficJamResource trafficJam)
     {
         String jamId = FIELD_JAM + trafficJam.getJamId().toString();
 
@@ -159,14 +170,32 @@ public class RedisDao implements IBeaconDb
     }
 
     @Override
+    public String getRecipientString()
+    {
+        if(jedis.exists(RECIPIENT_STRING))
+        {
+            return jedis.get(RECIPIENT_STRING);
+        } else return "";
+
+    }
+
+    @Override
     public long createUser(String id, String hash)
     {
         Transaction transaction = jedis.multi();
         transaction.sadd(USER_HASH_SET, hash);
         transaction.sadd(SET_USERS, id);
-
         List<Response<?>> responses = transaction.execGetResponse();
-        return (Long) responses.get(0).get() & (Long) responses.get(1).get();
+
+        long result = (Long) responses.get(0).get() & (Long) responses.get(1).get();
+
+        //User was added successfully
+        if (result == 1)
+        {
+            recalculateRecipients();
+        }
+
+        return result;
     }
 
     @Override
@@ -181,6 +210,9 @@ public class RedisDao implements IBeaconDb
         if (((Long) responses.get(0).get() & (Long) responses.get(1).get()) != 1)
         {
             throw new NotFoundException("Could not delete user " + id);
+        } else
+        {
+            recalculateRecipients();
         }
     }
 
@@ -188,6 +220,12 @@ public class RedisDao implements IBeaconDb
     public boolean userIsRegistered(String hash)
     {
         return jedis.sismember(USER_HASH_SET, hash);
+    }
+
+    private void recalculateRecipients()
+    {
+        Set<String> userSet = getRegisteredUsers();
+        jedis.set(RECIPIENT_STRING, new Gson().toJson(userSet));
     }
 
     private class ListenerRunnable implements Runnable
@@ -216,10 +254,13 @@ public class RedisDao implements IBeaconDb
 
         public void onMessage(String channel, String message)
         {
-            String[] messageAttributes = message.split(":");
-            String trafficJamId = messageAttributes[1];
-            jedis.lrem(LIST_JAM, 0, trafficJamId);
-            log.info("Jam " + trafficJamId + " expired and was removed from List");
+            if (REDIS_KEYEVENT_CHANNEL.equals(channel))
+            {
+                String[] messageAttributes = message.split(":");
+                String trafficJamId = messageAttributes[1];
+                jedis.lrem(LIST_JAM, 0, trafficJamId);
+                log.info("Jam " + trafficJamId + " expired and was removed from List");
+            }
         }
 
         public void onSubscribe(String channel, int subscribedChannels)
@@ -229,6 +270,7 @@ public class RedisDao implements IBeaconDb
 
         public void onUnsubscribe(String channel, int subscribedChannels)
         {
+            log.info("Unsubscribed from channel " + channel);
         }
 
         public void onPSubscribe(String pattern, int subscribedChannels)

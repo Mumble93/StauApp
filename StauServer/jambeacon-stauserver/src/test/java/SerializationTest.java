@@ -1,10 +1,10 @@
-import com.sta.dhbw.stauserver.model.TrafficJamModel;
+import com.google.gson.Gson;
+import com.sta.dhbw.stauserver.resource.TrafficJamResource;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Date;
-import java.util.UUID;
+import java.util.*;
 
 public class SerializationTest
 {
@@ -19,7 +19,7 @@ public class SerializationTest
         long timestamp = new Date().getTime();
         UUID id = UUID.randomUUID();
 
-        TrafficJamModel jam = new TrafficJamModel(latitude, longitude, timestamp, id, "testUser1");
+        TrafficJamResource jam = new TrafficJamResource(latitude, longitude, timestamp, id, "testUser1");
 
         log.debug("Serialized Jam is: " + jam.toJsonObject());
     }

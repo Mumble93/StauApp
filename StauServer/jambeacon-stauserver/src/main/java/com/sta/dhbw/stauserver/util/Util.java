@@ -1,7 +1,7 @@
 package com.sta.dhbw.stauserver.util;
 
 
-import com.sta.dhbw.stauserver.model.TrafficJamModel;
+import com.sta.dhbw.stauserver.resource.TrafficJamResource;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -22,7 +22,7 @@ public class Util
         return id.matches(validUUIDRegex);
     }
 
-    public static TrafficJamModel trafficJamFromMap(Map<String, String> attributes)
+    public static TrafficJamResource trafficJamFromMap(Map<String, String> attributes)
     {
         double longitude = Double.parseDouble(attributes.get(Constants.JAM_LONGITUDE));
         double latitude = Double.parseDouble(attributes.get(Constants.JAM_LATITUDE));
@@ -33,10 +33,10 @@ public class Util
 
         String owner = attributes.get(Constants.JAM_OWNER);
 
-        return new TrafficJamModel(longitude, latitude, timestamp, id, owner);
+        return new TrafficJamResource(longitude, latitude, timestamp, id, owner);
     }
 
-    public static Map<String, String> trafficJamToMap(TrafficJamModel jam)
+    public static Map<String, String> trafficJamToMap(TrafficJamResource jam)
     {
         HashMap<String, String> attributeMap = new HashMap<>();
 

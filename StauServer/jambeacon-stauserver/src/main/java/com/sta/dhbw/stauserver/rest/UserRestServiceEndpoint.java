@@ -2,7 +2,7 @@ package com.sta.dhbw.stauserver.rest;
 
 import com.sta.dhbw.stauserver.db.IBeaconDb;
 import com.sta.dhbw.stauserver.db.RedisDao;
-import com.sta.dhbw.stauserver.model.UserModel;
+import com.sta.dhbw.stauserver.resource.UserResource;
 import com.sta.dhbw.stauserver.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +23,7 @@ public class UserRestServiceEndpoint
     @POST
     @Consumes("application/json")
     @Produces("text/plain")
-    public Response registerUser(UserModel user) throws NoSuchAlgorithmException
+    public Response registerUser(UserResource user) throws NoSuchAlgorithmException
     {
         String userId = user.getUserId();
         String userIdHash = Util.hash256(userId);
@@ -68,7 +68,7 @@ public class UserRestServiceEndpoint
     @Path("unregister")
     @DELETE
     @Consumes("application/json")
-    public Response unregisterUser(UserModel user) throws NoSuchAlgorithmException
+    public Response unregisterUser(UserResource user) throws NoSuchAlgorithmException
     {
         String userId = user.getUserId();
         Status status = Status.OK;

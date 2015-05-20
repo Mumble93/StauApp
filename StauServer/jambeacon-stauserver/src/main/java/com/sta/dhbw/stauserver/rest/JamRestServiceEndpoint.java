@@ -3,7 +3,7 @@ package com.sta.dhbw.stauserver.rest;
 import com.sta.dhbw.stauserver.db.IBeaconDb;
 import com.sta.dhbw.stauserver.db.RedisDao;
 import com.sta.dhbw.stauserver.exception.StauserverException;
-import com.sta.dhbw.stauserver.model.TrafficJamModel;
+import com.sta.dhbw.stauserver.resource.TrafficJamResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,13 +27,13 @@ public class JamRestServiceEndpoint
     @Produces("application/json")
     public Response getAllJams()
     {
-        List<TrafficJamModel> jamList = dao.getTrafficJamList();
+        List<TrafficJamResource> jamList = dao.getTrafficJamList();
         if (jamList.isEmpty())
         {
             return Response.status(Status.NO_CONTENT).build();
         } else
         {
-            return Response.status(Status.OK).entity(new GenericEntity<List<TrafficJamModel>>(jamList)
+            return Response.status(Status.OK).entity(new GenericEntity<List<TrafficJamResource>>(jamList)
             {
             }).build();
         }
@@ -44,7 +44,7 @@ public class JamRestServiceEndpoint
     @Produces("application/json")
     public Response getJam(@PathParam("id") String id)
     {
-        TrafficJamModel jam = dao.getTrafficJam(id);
+        TrafficJamResource jam = dao.getTrafficJam(id);
         if (null == jam)
         {
             return Response.status(Status.NOT_FOUND).build();
@@ -57,7 +57,7 @@ public class JamRestServiceEndpoint
     @POST
     @Consumes("application/json")
     @Produces("application/json")
-    public Response postJam(@HeaderParam("X-Request-Id") String requestId, TrafficJamModel trafficJamModel)
+    public Response postJam(@HeaderParam("X-Request-Id") String requestId, TrafficJamResource trafficJamResource)
     {
         if (requestId == null || requestId.isEmpty())
         {
@@ -68,22 +68,22 @@ public class JamRestServiceEndpoint
         } else
         {
             {
-                if (trafficJamModel.getJamId() != null)
+                if (trafficJamResource.getJamId() != null)
                 {
                     return Response.status(Status.BAD_REQUEST).entity("Id must not be set in post request.").build();
                 }
 
-                trafficJamModel.setOwner(requestId);
-                trafficJamModel.setJamId(UUID.randomUUID());
+                trafficJamResource.setOwner(requestId);
+                trafficJamResource.setJamId(UUID.randomUUID());
 
                 try
                 {
-                    dao.storeTrafficJam(trafficJamModel);
+                    dao.storeTrafficJam(trafficJamResource);
                 } catch (StauserverException e)
                 {
-                    return Response.status(Status.BAD_REQUEST).entity(Entity.json(trafficJamModel)).build();
+                    return Response.status(Status.BAD_REQUEST).entity(Entity.json(trafficJamResource)).build();
                 }
-                return Response.status(Status.CREATED).entity(Entity.json(trafficJamModel)).build();
+                return Response.status(Status.CREATED).entity(Entity.json(trafficJamResource)).build();
             }
         }
     }
@@ -91,7 +91,7 @@ public class JamRestServiceEndpoint
     @PUT
     @Consumes("application/json")
     @Produces("application/json")
-    public Response updateJam(@HeaderParam("X-Request-Id") String requestId, TrafficJamModel trafficJamModel) throws StauserverException
+    public Response updateJam(@HeaderParam("X-Request-Id") String requestId, TrafficJamResource trafficJamResource) throws StauserverException
     {
         if (null == requestId || requestId.isEmpty())
         {
@@ -101,26 +101,26 @@ public class JamRestServiceEndpoint
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        TrafficJamModel existingJam;
+        TrafficJamResource existingJam;
 
         //Try retrieving the existing jam. Adhering to REST specification, call of PUT method on non-existing
         //resources will create a new resource
-        existingJam = dao.getTrafficJam(trafficJamModel.getJamId().toString());
+        existingJam = dao.getTrafficJam(trafficJamResource.getJamId().toString());
 
         if(null == existingJam)
         {
-            trafficJamModel.setOwner(requestId);
-            dao.storeTrafficJam(trafficJamModel);
-            return Response.status(Status.CREATED).entity(Entity.json(trafficJamModel)).build();
+            trafficJamResource.setOwner(requestId);
+            dao.storeTrafficJam(trafficJamResource);
+            return Response.status(Status.CREATED).entity(Entity.json(trafficJamResource)).build();
         }
 
         //Continue if Traffic Jam was found
         String existingJamOwner = existingJam.getOwner();
         if (existingJamOwner.equals(requestId))
         {
-            existingJam.setLatitude(trafficJamModel.getLatitude());
-            existingJam.setLongitude(trafficJamModel.getLongitude());
-            existingJam.setTimestamp(trafficJamModel.getTimestamp());
+            existingJam.setLatitude(trafficJamResource.getLatitude());
+            existingJam.setLongitude(trafficJamResource.getLongitude());
+            existingJam.setTimestamp(trafficJamResource.getTimestamp());
             dao.updateTrafficJam(existingJam);
             return Response.status(Status.OK).entity(Entity.json(existingJam)).build();
         } else
@@ -141,7 +141,7 @@ public class JamRestServiceEndpoint
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        TrafficJamModel jam = dao.getTrafficJam(id);
+        TrafficJamResource jam = dao.getTrafficJam(id);
 
         if (null == jam)
         {

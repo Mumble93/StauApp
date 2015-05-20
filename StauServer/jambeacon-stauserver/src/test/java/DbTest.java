@@ -1,11 +1,10 @@
 import com.sta.dhbw.stauserver.db.IBeaconDb;
 import com.sta.dhbw.stauserver.db.RedisDao;
-import com.sta.dhbw.stauserver.model.TrafficJamModel;
+import com.sta.dhbw.stauserver.resource.TrafficJamResource;
 import com.sta.dhbw.stauserver.rest.JamRestServiceEndpoint;
 
 import org.junit.BeforeClass;
 import org.junit.Ignore;
-import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +23,7 @@ public class DbTest
     @Ignore
     public void storeJamTest()
     {
-        TrafficJamModel model = new TrafficJamModel();
+        TrafficJamResource model = new TrafficJamResource();
         model.setLongitude(9.060760);
         model.setLatitude(48.727400);
         model.setTimestamp(1431695874);
