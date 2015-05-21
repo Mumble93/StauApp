@@ -1,4 +1,3 @@
-import com.google.gson.Gson;
 import com.sta.dhbw.stauserver.resource.TrafficJamResource;
 import org.junit.Test;
 import org.slf4j.Logger;

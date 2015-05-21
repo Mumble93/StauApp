@@ -1,12 +1,13 @@
 package com.sta.dhbw.stauserver.rest;
 
 import com.sta.dhbw.stauserver.db.IBeaconDb;
-import com.sta.dhbw.stauserver.db.RedisDao;
 import com.sta.dhbw.stauserver.exception.StauserverException;
+import com.sta.dhbw.stauserver.gcm.GcmClient;
 import com.sta.dhbw.stauserver.resource.TrafficJamResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ejb.EJB;
 import javax.ws.rs.*;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericEntity;
@@ -21,7 +22,11 @@ public class JamRestServiceEndpoint
 {
     private static final Logger log = LoggerFactory.getLogger(JamRestServiceEndpoint.class);
 
-    private static final IBeaconDb dao = new RedisDao();
+    @EJB
+    private static IBeaconDb dao;
+
+    @EJB
+    private static GcmClient gcmClient;
 
     @GET
     @Produces("application/json")
@@ -107,7 +112,7 @@ public class JamRestServiceEndpoint
         //resources will create a new resource
         existingJam = dao.getTrafficJam(trafficJamResource.getJamId().toString());
 
-        if(null == existingJam)
+        if (null == existingJam)
         {
             trafficJamResource.setOwner(requestId);
             dao.storeTrafficJam(trafficJamResource);

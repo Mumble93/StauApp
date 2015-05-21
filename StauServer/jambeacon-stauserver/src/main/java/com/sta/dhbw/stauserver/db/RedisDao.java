@@ -1,6 +1,5 @@
 package com.sta.dhbw.stauserver.db;
 
-import com.google.gson.Gson;
 import com.sta.dhbw.stauserver.exception.StauserverException;
 import com.sta.dhbw.stauserver.util.Constants;
 import com.sta.dhbw.stauserver.util.Util;
@@ -12,45 +11,67 @@ import redis.clients.jedis.JedisPubSub;
 import redis.clients.jedis.Response;
 import redis.clients.jedis.Transaction;
 
+import javax.annotation.Resource;
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
+import javax.enterprise.concurrent.ManagedThreadFactory;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
 import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
+@Singleton
+@Startup
 public class RedisDao implements IBeaconDb
 {
     private static final Logger log = LoggerFactory.getLogger(RedisDao.class);
 
     private Jedis jedis;
 
+    @Resource
+    private static ManagedThreadFactory threadFactory;
+
     private static final String REDIS_RESPONSE_OK = "OK";
     private static final String REDIS_KEYEVENT_CHANNEL = "__keyevent@0__:expired";
 
     private static final String FIELD_JAM = "jam:";
     private static final String LIST_JAM = "jams";
-    private static final String SET_USERS = "users";
-    private static final String RECIPIENT_STRING = "recipients";
+    private static final String LIST_USERS = "users";
     private static final String USER_HASH_SET = "users:hashes";
 
-    public RedisDao(String redisHost, int redisPort)
+    public RedisDao(String redisHost, int redisPort) throws StauserverException
     {
-        this.jedis = new Jedis(redisHost, redisPort);
-
-        Set<String> registeredUsers = getRegisteredUsers();
-
-        if (jedis.exists(SET_USERS) && !registeredUsers.isEmpty())
+        try
         {
-            recalculateRecipients();
+            if (null == threadFactory)
+            {
+                synchronized (RedisDao.class)
+                {
+                    if (null == threadFactory)
+                    {
+                        threadFactory = InitialContext.doLookup("java:comp/DefaultManagedThreadFactory");
+                        log.info("Successfully got ThreadFactory");
+                    }
+                }
+            }
+        } catch (NamingException e)
+        {
+            String error = "Error getting ThreadFactory. " + e.getMessage();
+            throw new StauserverException(error, e);
         }
 
-        //The subscribe operation blocks the thread it is called on
-        //So it has to be started on a new thread
-        (new Thread(new ListenerRunnable(redisHost, redisPort))).start();
+        this.jedis = new Jedis(redisHost, redisPort);
 
+        //The subscribe operation blocks the thread it is called on
+        //So it has to be started on a new thread and Jedis object
+        Runnable listenForExpiry = new ExpiryListenerRunnable(redisHost, redisPort);
+        Thread thread = threadFactory.newThread(listenForExpiry);
+        thread.start();
     }
 
-    public RedisDao()
+    public RedisDao() throws StauserverException
     {
         this("localhost", 6379);
     }
@@ -164,19 +185,9 @@ public class RedisDao implements IBeaconDb
     }
 
     @Override
-    public Set<String> getRegisteredUsers()
+    public List<String> getRegisteredUsers()
     {
-        return jedis.smembers(SET_USERS);
-    }
-
-    @Override
-    public String getRecipientString()
-    {
-        if(jedis.exists(RECIPIENT_STRING))
-        {
-            return jedis.get(RECIPIENT_STRING);
-        } else return "";
-
+        return jedis.lrange(LIST_USERS, 0, -1);
     }
 
     @Override
@@ -184,35 +195,24 @@ public class RedisDao implements IBeaconDb
     {
         Transaction transaction = jedis.multi();
         transaction.sadd(USER_HASH_SET, hash);
-        transaction.sadd(SET_USERS, id);
+        transaction.lpush(LIST_USERS, id);
         List<Response<?>> responses = transaction.execGetResponse();
 
-        long result = (Long) responses.get(0).get() & (Long) responses.get(1).get();
-
-        //User was added successfully
-        if (result == 1)
-        {
-            recalculateRecipients();
-        }
-
-        return result;
+        return (Long) responses.get(0).get() & (Long) responses.get(1).get();
     }
 
     @Override
     public void deleteUser(String id, String hash) throws NotFoundException
     {
         Transaction transaction = jedis.multi();
-        transaction.srem(SET_USERS, id);
         transaction.srem(USER_HASH_SET, hash);
+        transaction.lrem(LIST_USERS, 0, id);
 
         List<Response<?>> responses = transaction.execGetResponse();
 
         if (((Long) responses.get(0).get() & (Long) responses.get(1).get()) != 1)
         {
             throw new NotFoundException("Could not delete user " + id);
-        } else
-        {
-            recalculateRecipients();
         }
     }
 
@@ -222,18 +222,12 @@ public class RedisDao implements IBeaconDb
         return jedis.sismember(USER_HASH_SET, hash);
     }
 
-    private void recalculateRecipients()
-    {
-        Set<String> userSet = getRegisteredUsers();
-        jedis.set(RECIPIENT_STRING, new Gson().toJson(userSet));
-    }
-
-    private class ListenerRunnable implements Runnable
+    private class ExpiryListenerRunnable implements Runnable
     {
         private String redisHost;
         private int redisPort;
 
-        public ListenerRunnable(String redisHost, int redisPort)
+        public ExpiryListenerRunnable(String redisHost, int redisPort)
         {
             this.redisHost = redisHost;
             this.redisPort = redisPort;

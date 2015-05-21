@@ -18,6 +18,5 @@ public interface IBeaconDb
     long createUser(String id, String hash);
     void deleteUser(String id, String hash) throws NotFoundException;
     boolean userIsRegistered(String hash);
-    Set<String> getRegisteredUsers();
-    String getRecipientString();
+    List<String> getRegisteredUsers();
 }

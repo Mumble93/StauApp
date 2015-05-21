@@ -1,12 +1,16 @@
 import com.sta.dhbw.stauserver.db.IBeaconDb;
 import com.sta.dhbw.stauserver.db.RedisDao;
+import com.sta.dhbw.stauserver.exception.StauserverException;
 import com.sta.dhbw.stauserver.resource.TrafficJamResource;
 import com.sta.dhbw.stauserver.rest.JamRestServiceEndpoint;
 
 import org.junit.BeforeClass;
 import org.junit.Ignore;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 public class DbTest
 {
@@ -15,13 +19,19 @@ public class DbTest
     private static final Logger log = LoggerFactory.getLogger(DbTest.class);
 
     @BeforeClass
-    public static void setup()
+    public static void setup() throws StauserverException
     {
         dao = new RedisDao();
     }
 
+    @Test
+    public void getJamListTest()
+    {
+        List<String> userList = dao.getRegisteredUsers();
+    }
+
     @Ignore
-    public void storeJamTest()
+    public void storeJamTest() throws StauserverException
     {
         TrafficJamResource model = new TrafficJamResource();
         model.setLongitude(9.060760);
@@ -33,7 +43,7 @@ public class DbTest
     }
 
     @Ignore
-    public void deleteJamTest()
+    public void deleteJamTest() throws StauserverException
     {
         JamRestServiceEndpoint restServiceEndpoint = new JamRestServiceEndpoint();
         restServiceEndpoint.deleteTrafficJam("asdfoaif092ue29fjaods0f9ua92hföisdhgg2", "0fcd0d4f-e8b5-4139-b075-f09a4ebd76dd");
