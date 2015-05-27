@@ -11,7 +11,6 @@ import redis.clients.jedis.JedisPubSub;
 import redis.clients.jedis.Response;
 import redis.clients.jedis.Transaction;
 
-import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;

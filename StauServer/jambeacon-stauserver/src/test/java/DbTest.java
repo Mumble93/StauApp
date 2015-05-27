@@ -24,7 +24,7 @@ public class DbTest
         dao = new RedisDao();
     }
 
-    @Test
+    @Ignore
     public void getJamListTest()
     {
         List<String> userList = dao.getRegisteredUsers();

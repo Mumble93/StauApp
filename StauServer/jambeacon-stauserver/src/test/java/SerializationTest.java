@@ -1,4 +1,5 @@
 import com.sta.dhbw.stauserver.resource.TrafficJamResource;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,7 +10,7 @@ public class SerializationTest
 {
     private static final Logger log = LoggerFactory.getLogger(SerializationTest.class);
 
-    @Test
+    @Ignore
     public void jamSerializationTest()
     {
         double latitude = 48.14564;
