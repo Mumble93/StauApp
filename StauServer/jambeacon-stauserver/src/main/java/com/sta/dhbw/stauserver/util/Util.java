@@ -1,7 +1,10 @@
 package com.sta.dhbw.stauserver.util;
 
 
+import com.sta.dhbw.stauserver.exception.StauserverException;
 import com.sta.dhbw.stauserver.resource.TrafficJamResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -11,6 +14,8 @@ import java.util.UUID;
 
 public class Util
 {
+    private static final Logger log = LoggerFactory.getLogger(Util.class);
+
     public static boolean validateUuId(UUID id)
     {
         return validateUuId(id.toString());
@@ -51,9 +56,18 @@ public class Util
     }
 
 
-    public static String hash256(String data) throws NoSuchAlgorithmException
+    public static String hash256(String data) throws StauserverException
     {
-        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        MessageDigest md;
+        try
+        {
+            md = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e)
+        {
+            String error = "Error getting MessageDigest. " + e.getMessage();
+            log.error(error);
+            throw new StauserverException(error, e);
+        }
         md.update(data.getBytes());
         return bytesToHex(md.digest());
     }

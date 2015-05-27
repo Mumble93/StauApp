@@ -11,6 +11,7 @@ import redis.clients.jedis.JedisPubSub;
 import redis.clients.jedis.Response;
 import redis.clients.jedis.Transaction;
 
+import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
@@ -67,13 +68,19 @@ public class RedisDao implements IBeaconDb
         //The subscribe operation blocks the thread it is called on
         //So it has to be started on a new thread and Jedis object
         Runnable listenForExpiry = new ExpiryListenerRunnable(redisHost, redisPort);
-        Thread thread = threadFactory.newThread(listenForExpiry);
-        thread.start();
+        Thread listenerThread = threadFactory.newThread(listenForExpiry);
+        listenerThread.start();
     }
 
     public RedisDao() throws StauserverException
     {
         this("localhost", 6379);
+    }
+
+    @Override
+    public boolean isAlive()
+    {
+        return jedis.isConnected();
     }
 
     @Override
@@ -109,6 +116,8 @@ public class RedisDao implements IBeaconDb
         Transaction transaction = jedis.multi();
         transaction.hmset(FIELD_JAM + jamId, Util.trafficJamToMap(jam));
         transaction.lpush(LIST_JAM, jamId);
+        //Map the jam to the owner, for update purposes
+        transaction.set(jamId, jam.getOwner());
         transaction.expire(FIELD_JAM + jamId, 600);
 
         List<Response<?>> responses = transaction.execGetResponse();
@@ -138,18 +147,30 @@ public class RedisDao implements IBeaconDb
     @Override
     public void updateTrafficJam(TrafficJamResource trafficJam)
     {
+        updateTrafficJam(trafficJam, false);
+    }
+
+    @Override
+    public void updateTrafficJam(TrafficJamResource trafficJam, boolean updateOwner)
+    {
         String jamId = FIELD_JAM + trafficJam.getJamId().toString();
 
         Map<String, String> updatedJamValues = Util.trafficJamToMap(trafficJam);
         Map<String, String> existingJamValues = jedis.hgetAll(jamId);
 
-        //Id and owner should not be overwritten
+        //Id should not be overwritten
         existingJamValues.put(Constants.JAM_LATITUDE, updatedJamValues.get(Constants.JAM_LATITUDE));
         existingJamValues.put(Constants.JAM_LONGITUDE, updatedJamValues.get(Constants.JAM_LONGITUDE));
         existingJamValues.put(Constants.JAM_TIME, updatedJamValues.get(Constants.JAM_TIME));
 
         Transaction transaction = jedis.multi();
 
+        if (updateOwner)
+        {
+            String updatedOwner = updatedJamValues.get(Constants.JAM_OWNER);
+            existingJamValues.put(Constants.JAM_OWNER, updatedOwner);
+            transaction.set(trafficJam.getJamId().toString(), updatedOwner);
+        }
         transaction.hmset(jamId, existingJamValues);
         transaction.expire(jamId, 600);
 
@@ -166,7 +187,7 @@ public class RedisDao implements IBeaconDb
         //Number of keys removed should be 1 in both operations
         transaction.del(FIELD_JAM + id);
         transaction.lrem(LIST_JAM, 0, id);
-
+        transaction.del(id);
         List<Response<?>> responses = transaction.execGetResponse();
 
         for (Response response : responses)
@@ -191,19 +212,41 @@ public class RedisDao implements IBeaconDb
     }
 
     @Override
-    public long createUser(String id, String hash)
+    public long createUser(String id, String hash) throws StauserverException
     {
+        if (null == id || id.isEmpty())
+        {
+            throw new StauserverException("Error creating User. ID must be set.");
+        }
+
+        if (null == hash || hash.isEmpty())
+        {
+            hash = Util.hash256(id);
+        }
+
         Transaction transaction = jedis.multi();
         transaction.sadd(USER_HASH_SET, hash);
         transaction.lpush(LIST_USERS, id);
         List<Response<?>> responses = transaction.execGetResponse();
 
+        log.info("Created User " + id);
+
         return (Long) responses.get(0).get() & (Long) responses.get(1).get();
     }
 
     @Override
-    public void deleteUser(String id, String hash) throws NotFoundException
+    public void deleteUser(String id, String hash) throws NotFoundException, StauserverException
     {
+        if (null == id || id.isEmpty())
+        {
+            throw new StauserverException("Error deleting User. ID must be set.");
+        }
+
+        if (null == hash || hash.isEmpty())
+        {
+            hash = Util.hash256(id);
+        }
+
         Transaction transaction = jedis.multi();
         transaction.srem(USER_HASH_SET, hash);
         transaction.lrem(LIST_USERS, 0, id);
@@ -214,6 +257,40 @@ public class RedisDao implements IBeaconDb
         {
             throw new NotFoundException("Could not delete user " + id);
         }
+
+        log.info("Deleted User " + id);
+    }
+
+    @Override
+    public void updateUser(String oldId, String updatedId) throws StauserverException
+    {
+        String oldIdHash = Util.hash256(oldId);
+        String updatedIdHash = Util.hash256(updatedId);
+
+        Transaction transaction = jedis.multi();
+
+
+        List<String> jamList = jedis.lrange(LIST_JAM, 0, -1);
+        for (String jamId : jamList)
+        {
+            if (jedis.exists(jamId) && oldId.equals(jedis.get(jamId)))
+            {
+                transaction.set(jamId, updatedId);
+                break;
+            }
+        }
+
+        //Remove old Id, add new one
+        transaction.lrem(LIST_USERS, 0, oldId);
+        transaction.lpush(LIST_USERS, updatedId);
+        //Remove old hash, add new one to set
+        transaction.srem(USER_HASH_SET, oldIdHash);
+        transaction.sadd(USER_HASH_SET, updatedIdHash);
+
+        transaction.exec();
+
+        log.info("Updated User " + oldId + " to " + updatedId);
+
     }
 
     @Override
@@ -252,7 +329,11 @@ public class RedisDao implements IBeaconDb
             {
                 String[] messageAttributes = message.split(":");
                 String trafficJamId = messageAttributes[1];
-                jedis.lrem(LIST_JAM, 0, trafficJamId);
+
+                Transaction transaction = jedis.multi();
+                transaction.lrem(LIST_JAM, 0, trafficJamId);
+                transaction.del(trafficJamId);
+                transaction.exec();
                 log.info("Jam " + trafficJamId + " expired and was removed from List");
             }
         }

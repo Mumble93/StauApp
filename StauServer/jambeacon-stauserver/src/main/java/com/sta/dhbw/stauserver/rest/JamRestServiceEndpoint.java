@@ -4,8 +4,6 @@ import com.sta.dhbw.stauserver.db.IBeaconDb;
 import com.sta.dhbw.stauserver.exception.StauserverException;
 import com.sta.dhbw.stauserver.gcm.GcmClient;
 import com.sta.dhbw.stauserver.resource.TrafficJamResource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.ejb.EJB;
 import javax.ws.rs.*;
@@ -20,7 +18,6 @@ import java.util.UUID;
 @Path("jams")
 public class JamRestServiceEndpoint
 {
-    private static final Logger log = LoggerFactory.getLogger(JamRestServiceEndpoint.class);
 
     @EJB
     private static IBeaconDb dao;

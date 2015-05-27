@@ -9,14 +9,18 @@ import java.util.Set;
 
 public interface IBeaconDb
 {
+    boolean isAlive();
+
     TrafficJamResource getTrafficJam(String id);
     void storeTrafficJam (TrafficJamResource trafficJam) throws StauserverException;
     List<TrafficJamResource> getTrafficJamList();
     void updateTrafficJam (TrafficJamResource trafficJam);
+    void updateTrafficJam (TrafficJamResource trafficJam, boolean updateOwner);
     void deleteTrafficJam(String id) throws NotFoundException;
 
-    long createUser(String id, String hash);
-    void deleteUser(String id, String hash) throws NotFoundException;
+    long createUser(String id, String hash) throws StauserverException;
+    void deleteUser(String id, String hash) throws NotFoundException, StauserverException;
+    void updateUser(String oldId, String updatedId) throws StauserverException;
     boolean userIsRegistered(String hash);
     List<String> getRegisteredUsers();
 }

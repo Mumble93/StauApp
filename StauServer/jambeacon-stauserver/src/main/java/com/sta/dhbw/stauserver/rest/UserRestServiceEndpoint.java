@@ -27,7 +27,7 @@ public class UserRestServiceEndpoint
     @POST
     @Consumes("application/json")
     @Produces("text/plain")
-    public Response registerUser(UserResource user) throws NoSuchAlgorithmException
+    public Response registerUser(UserResource user) throws StauserverException
     {
         String userId = user.getUserId();
         String userIdHash = Util.hash256(userId);
@@ -40,22 +40,19 @@ public class UserRestServiceEndpoint
         if (result > 0)
         {
             status = Status.CREATED;
-            logMessage = "Registered new User with Id: " + userId;
         }
         //User was already contained in set
         else if (result == 0)
         {
             status = Status.CONFLICT;
-            logMessage = "User already registered with " + userId;
         }
         //Adding User failed due to other reasons
         else
         {
             status = Status.BAD_REQUEST;
-            logMessage = "Error registering new User. Tried with Id: " + userId;
+            log.error("Error registering new User. Tried with Id: " + userId);
         }
 
-        log.info(logMessage);
 
         Response response;
         if (status == Status.CREATED)
@@ -72,7 +69,7 @@ public class UserRestServiceEndpoint
     @Path("unregister")
     @DELETE
     @Consumes("application/json")
-    public Response unregisterUser(UserResource user) throws NoSuchAlgorithmException
+    public Response unregisterUser(UserResource user) throws StauserverException
     {
         String userId = user.getUserId();
         Status status = Status.OK;
@@ -84,9 +81,6 @@ public class UserRestServiceEndpoint
         {
             status = Status.NOT_FOUND;
         }
-
-        log.info("Unregistered user " + userId);
-
 
         return Response.status(status).build();
     }

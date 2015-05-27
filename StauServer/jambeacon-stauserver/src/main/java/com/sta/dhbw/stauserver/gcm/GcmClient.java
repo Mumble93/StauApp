@@ -29,7 +29,7 @@ public class GcmClient
     private static final Logger log = LoggerFactory.getLogger(GcmClient.class);
 
     private static final String API_KEY = "AIzaSyD9zwvulCjrJwofmO3ZpLsBbqOyC8Q12Vc";
-    private static final String TARGET = "https://android.googleapis.com/gcm/send";
+    //private static final String TARGET = "https://android.googleapis.com/gcm/send";
 
     private static final int TTL_VALUE = 600; //Messages will be stored for 10 minutes
     private static final int MAX_RETRIES = 10; //Beware that exponential backoff is used on retry
@@ -104,41 +104,55 @@ public class GcmClient
             this.recipients = recipients;
         }
 
-        private void handleMulticastResult(MulticastResult result)
+        private void handleMulticastResult(MulticastResult multicastResult)
         {
-            if (null == result)
+            if (null == multicastResult)
             {
                 log.error("Error, result was null.");
-            } else if (result.getFailure() == 0 && result.getCanonicalIds() == 0)
+            } else if (multicastResult.getFailure() == 0 && multicastResult.getCanonicalIds() == 0)
             {
                 //Request was processed successfully
                 //Remainder of response does not have to be parsed
-                log.info("Message sent successfully, MulticastId: " + result.getMulticastId());
-                return;
+                log.info("Message sent successfully, MulticastId: " + multicastResult.getMulticastId());
             } else
             {
-                List<Result> messageResultList = result.getResults();
+                List<Result> messageResultList = multicastResult.getResults();
                 for (Result messageResult : messageResultList)
                 {
-                   if (messageResult.getMessageId() == null)
-                   {
-                       handleErrorCode(messageResult.getErrorCodeName());
-                   } else
-                   {
-                       if (messageResult.getCanonicalRegistrationId() != null)
-                       {
-                           //ToDo: Implement update of registration id
-                       }
-                   }
+                    if (messageResult.getMessageId() == null)
+                    {
+                        String errorCode = messageResult.getErrorCodeName();
+                        if (com.google.android.gcm.server.Constants.ERROR_NOT_REGISTERED.equals(errorCode))
+                        {
+                            int resultMessageIndex = messageResultList.indexOf(messageResult);
+                            String userId = recipients.get(resultMessageIndex);
+                            try
+                            {
+                                dao.deleteUser(userId, null);
+                            } catch (StauserverException e)
+                            {
+                                log.error(e.getMessage());
+                            }
+                        } else
+                        {
+                            log.error("Sending message to GCM failed because of " + errorCode);
+                        }
+                    } else
+                    {
+                        if (messageResult.getCanonicalRegistrationId() != null)
+                        {
+                            int resultMessageIndex = messageResultList.indexOf(messageResult);
+                            String originalId = recipients.get(resultMessageIndex);
+                            try
+                            {
+                                dao.updateUser(originalId, messageResult.getCanonicalRegistrationId());
+                            } catch (StauserverException e)
+                            {
+                                log.error(e.getMessage());
+                            }
+                        }
+                    }
                 }
-            }
-        }
-
-        private void handleErrorCode(String errorCode)
-        {
-            if (com.google.android.gcm.server.Constants.ERROR_NOT_REGISTERED.equals(errorCode))
-            {
-                //ToDo: Implement User Deletion if this error occurs
             }
         }
 
