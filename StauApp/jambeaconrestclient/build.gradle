@@ -21,6 +21,12 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:appcompat-v7:22.1.1'
-    compile 'javax:javaee-api:7.0'
+    compile 'org.jboss.resteasy:resteasy-client:3.0.11.Final'
+    compile 'com.fasterxml.jackson.core:jackson-core:2.5.3'
+    compile 'com.fasterxml.jackson.core:jackson-annotations:2.5.3'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.5.3'
+    compile 'com.fasterxml.jackson.jaxrs:jackson-jaxrs-base:2.5.3'
+    compile 'com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.5.3'
+    compile 'com.fasterxml.jackson.module:jackson-module-jaxb-annotations:2.5.3'
 
 }

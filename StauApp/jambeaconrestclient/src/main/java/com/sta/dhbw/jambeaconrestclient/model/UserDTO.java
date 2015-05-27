@@ -1,13 +1,11 @@
 package com.sta.dhbw.jambeaconrestclient.model;
 
-import com.sta.dhbw.jambeaconrestclient.util.Constants;
-
-import javax.json.Json;
-import javax.json.JsonObject;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 public class UserDTO
 {
     private String userId;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String userIdHash;
 
     public UserDTO(){}
@@ -36,11 +34,5 @@ public class UserDTO
     public void setUserIdHash(String userIdHash)
     {
         this.userIdHash = userIdHash;
-    }
-
-    public JsonObject toJsonObject()
-    {
-        return Json.createObjectBuilder()
-                .add(Constants.USER_ID, getUserId()).build();
     }
 }
