@@ -64,12 +64,11 @@ public class UserRestServiceEndpoint
         return response;
     }
 
-    @Path("unregister")
+    @Path("unregister/{id}")
     @DELETE
-    @Consumes("text/plain")
-    public Response unregisterUser(String userId) throws StauserverException
+    public Response unregisterUser(@PathParam("id") String userId) throws StauserverException
     {
-        if (null == userId|| userId.isEmpty())
+        if (null == userId || userId.isEmpty())
         {
             return Response.status(Status.BAD_REQUEST).build();
         }
@@ -78,7 +77,7 @@ public class UserRestServiceEndpoint
 
         long result = dao.deleteUser(userId, Util.hash256(userId));
 
-        switch ((int)result)
+        switch ((int) result)
         {
             case -1:
                 status = Status.EXPECTATION_FAILED;
