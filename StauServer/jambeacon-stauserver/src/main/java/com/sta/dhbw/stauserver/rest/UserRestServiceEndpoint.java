@@ -19,11 +19,17 @@ public class UserRestServiceEndpoint
     @EJB
     private static IBeaconDb dao;
 
-    @Path("register/{id}")
+    @Path("register")
     @POST
     @Produces("text/plain")
-    public Response registerUser(@PathParam("id") String userId) throws StauserverException
+    @Consumes("text/plain")
+    public Response registerUser(String userId) throws StauserverException
     {
+        if (null == userId || userId.isEmpty())
+        {
+            return Response.status(Status.BAD_REQUEST).build();
+        }
+
         String userIdHash = Util.hash256(userId);
 
         Status status;
@@ -58,11 +64,18 @@ public class UserRestServiceEndpoint
         return response;
     }
 
-    @Path("unregister/{id}")
+    @Path("unregister")
     @DELETE
-    public Response unregisterUser(@PathParam("id") String userId) throws StauserverException
+    @Consumes("text/plain")
+    public Response unregisterUser(String userId) throws StauserverException
     {
+        if (null == userId|| userId.isEmpty())
+        {
+            return Response.status(Status.BAD_REQUEST).build();
+        }
+
         Status status;
+
         long result = dao.deleteUser(userId, Util.hash256(userId));
 
         switch ((int)result)
