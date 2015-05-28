@@ -5,8 +5,13 @@ import android.location.LocationManager;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 import java.util.UUID;
 
+@JsonSerialize(using = TrafficJamSerializer.class)
+@JsonDeserialize(using = TrafficJamDeserializer.class)
 public class TrafficJam implements Parcelable
 {
     private static final String TAG = TrafficJam.class.getSimpleName();
