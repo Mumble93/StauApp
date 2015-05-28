@@ -4,7 +4,6 @@ import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.sta.dhbw.jambeaconrestclient.exception.JamBeaconException;
-import com.sta.dhbw.jambeaconrestclient.model.TrafficJamDTO;
 
 import java.util.List;
 import java.util.UUID;
@@ -44,7 +43,7 @@ public class JamBeaconRestClient
         X_REQUEST_ID = sharedPreferences.getString("registration_id", "");
         Log.i(TAG, "Initialized with registration id " + X_REQUEST_ID);
 
-        if(isInDebugMode)
+        if (isInDebugMode)
         {
             Log.i(TAG, "Starting in DEBUG Mode.");
             this.SERVER_ENDPOINT = "http://localhost:8080/api/v1/";
@@ -59,7 +58,7 @@ public class JamBeaconRestClient
     @Produces(MediaType.TEXT_PLAIN)
     public String registerUser(String userId) throws JamBeaconException
     {
-        if(isInDebugMode)
+        if (isInDebugMode)
         {
             userId = "appTestUser42";
         }
@@ -76,9 +75,9 @@ public class JamBeaconRestClient
             String error = "ERROR while registering at server.";
             Log.e(TAG, error);
             throw new JamBeaconException(error);
-        }else
+        } else
         {
-            return  response.readEntity(String.class);
+            return response.readEntity(String.class);
         }
     }
 
@@ -117,29 +116,31 @@ public class JamBeaconRestClient
             String error = "Error posting Traffic Jam to server.";
             Log.e(TAG, error);
             throw new JamBeaconException(error);
-        }else
+        } else
         {
             return response.readEntity(TrafficJam.class);
         }
     }
 
     @GET
-    public List<TrafficJamDTO> getTrafficJamList() throws JamBeaconException
+    public List<TrafficJam> getTrafficJamList() throws JamBeaconException
     {
         Client client = ClientBuilder.newClient();
         WebTarget target = client.target(JAM_ENDPOINT);
         Response response = target.request()
                 .get();
 
-        if(response.getStatusInfo() == Response.Status.OK)
+        if (response.getStatusInfo() == Response.Status.OK)
         {
-            return response.readEntity(new GenericType<List<TrafficJamDTO>>(){});
+            return response.readEntity(new GenericType<List<TrafficJam>>()
+            {
+            });
         } else if (response.getStatusInfo() == Response.Status.NO_CONTENT)
         {
             return null;
         } else
         {
-            String error = "ERROR getting List of Traffic Jams. Status was " +response.getStatus();
+            String error = "ERROR getting List of Traffic Jams. Status was " + response.getStatus();
             Log.e(TAG, error);
             throw new JamBeaconException(error);
         }
@@ -154,7 +155,7 @@ public class JamBeaconRestClient
         Response response = target.resolveTemplate("id", jamId)
                 .request()
                 .get();
-        if(response.getStatusInfo() == Response.Status.OK)
+        if (response.getStatusInfo() == Response.Status.OK)
         {
             return response.readEntity(TrafficJam.class);
         } else if (response.getStatusInfo() == Response.Status.NOT_FOUND)

@@ -8,10 +8,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.DoubleNode;
-import com.fasterxml.jackson.databind.node.LongNode;
-import com.sta.dhbw.jambeaconrestclient.exception.JamBeaconException;
-import com.sta.dhbw.jambeaconrestclient.model.TrafficJamDTO;
+
 import com.sta.dhbw.jambeaconrestclient.util.Constants;
 
 import java.io.IOException;
@@ -31,7 +28,7 @@ public final class TrafficJamDeserializer extends JsonDeserializer<TrafficJam>
         UUID jamId = UUID.fromString(jsonNode.get(Constants.JAM_ID).asText());
         double latitude = (Double) jsonNode.get(Constants.JAM_LATITUDE).numberValue();
         double longitude = (Double) jsonNode.get(Constants.JAM_LONGITUDE).numberValue();
-        long timestamp = (Long)  jsonNode.get(Constants.JAM_TIME).numberValue();
+        long timestamp = (Long) jsonNode.get(Constants.JAM_TIME).numberValue();
 
         location.setLatitude(latitude);
         location.setLongitude(longitude);
