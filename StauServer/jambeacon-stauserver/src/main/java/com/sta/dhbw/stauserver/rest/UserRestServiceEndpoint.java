@@ -1,9 +1,7 @@
 package com.sta.dhbw.stauserver.rest;
 
 import com.sta.dhbw.stauserver.db.IBeaconDb;
-import com.sta.dhbw.stauserver.db.RedisDao;
 import com.sta.dhbw.stauserver.exception.StauserverException;
-import com.sta.dhbw.stauserver.resource.UserResource;
 import com.sta.dhbw.stauserver.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,8 +11,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import java.security.NoSuchAlgorithmException;
-
 @Path("users")
 public class UserRestServiceEndpoint
 {
@@ -23,17 +19,15 @@ public class UserRestServiceEndpoint
     @EJB
     private static IBeaconDb dao;
 
-    @Path("register")
+    @Path("register/{id}")
     @POST
-    @Consumes("application/json")
     @Produces("text/plain")
-    public Response registerUser(UserResource user) throws StauserverException
+    public Response registerUser(@PathParam("id") String userId) throws StauserverException
     {
-        String userId = user.getUserId();
         String userIdHash = Util.hash256(userId);
 
         Status status;
-        String logMessage;
+        Response response;
 
         long result = dao.createUser(userId, userIdHash);
         //User was added to set
@@ -53,8 +47,6 @@ public class UserRestServiceEndpoint
             log.error("Error registering new User. Tried with Id: " + userId);
         }
 
-
-        Response response;
         if (status == Status.CREATED)
         {
             response = Response.status(status).entity(userIdHash).build();
@@ -66,12 +58,10 @@ public class UserRestServiceEndpoint
         return response;
     }
 
-    @Path("unregister")
+    @Path("unregister/{id}")
     @DELETE
-    @Consumes("application/json")
-    public Response unregisterUser(UserResource user) throws StauserverException
+    public Response unregisterUser(@PathParam("id") String userId) throws StauserverException
     {
-        String userId = user.getUserId();
         Status status = Status.OK;
 
         try
