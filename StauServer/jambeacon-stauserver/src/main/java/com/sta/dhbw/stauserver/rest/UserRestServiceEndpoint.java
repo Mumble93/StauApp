@@ -62,15 +62,25 @@ public class UserRestServiceEndpoint
     @DELETE
     public Response unregisterUser(@PathParam("id") String userId) throws StauserverException
     {
-        Status status = Status.OK;
+        Status status;
+        long result = dao.deleteUser(userId, Util.hash256(userId));
 
-        try
+        switch ((int)result)
         {
-            dao.deleteUser(userId, Util.hash256(userId));
-        } catch (NotFoundException e)
-        {
-            status = Status.NOT_FOUND;
+            case -1:
+                status = Status.EXPECTATION_FAILED;
+                break;
+            case 0:
+                status = Status.NOT_FOUND;
+                break;
+            case 1:
+                status = Status.OK;
+                log.info("DELETED User " + userId);
+                break;
+            default:
+                status = Status.INTERNAL_SERVER_ERROR;
         }
+
 
         return Response.status(status).build();
     }

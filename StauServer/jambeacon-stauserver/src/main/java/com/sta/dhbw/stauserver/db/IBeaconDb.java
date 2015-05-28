@@ -19,7 +19,7 @@ public interface IBeaconDb
     void deleteTrafficJam(String id) throws NotFoundException;
 
     long createUser(String id, String hash) throws StauserverException;
-    void deleteUser(String id, String hash) throws NotFoundException, StauserverException;
+    long deleteUser(String id, String hash) throws StauserverException;
     void updateUser(String oldId, String updatedId) throws StauserverException;
     boolean userIsRegistered(String hash);
     List<String> getRegisteredUsers();

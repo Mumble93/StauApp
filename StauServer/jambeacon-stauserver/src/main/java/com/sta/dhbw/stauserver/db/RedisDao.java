@@ -223,22 +223,29 @@ public class RedisDao implements IBeaconDb
             hash = Util.hash256(id);
         }
 
-        Transaction transaction = jedis.multi();
-        transaction.sadd(USER_HASH_SET, hash);
-        transaction.lpush(LIST_USERS, id);
-        List<Response<?>> responses = transaction.execGetResponse();
+        if (jedis.sismember(USER_HASH_SET, hash))
+        {
+            return 0;
+        } else
+        {
+            Transaction transaction = jedis.multi();
+            transaction.sadd(USER_HASH_SET, hash);
+            transaction.lpush(LIST_USERS, id);
+            List<Response<?>> responses = transaction.execGetResponse();
 
-        log.info("Created User " + id);
+            log.info("Created User " + id);
 
-        return (Long) responses.get(0).get() & (Long) responses.get(1).get();
+            return (Long) responses.get(0).get() & (Long) responses.get(1).get();
+        }
     }
 
     @Override
-    public void deleteUser(String id, String hash) throws NotFoundException, StauserverException
+    public long deleteUser(String id, String hash) throws StauserverException
     {
         if (null == id || id.isEmpty())
         {
-            throw new StauserverException("Error deleting User. ID must be set.");
+            log.error("DELETE Error: Id was not set.");
+            return -1;
         }
 
         if (null == hash || hash.isEmpty())
@@ -252,12 +259,7 @@ public class RedisDao implements IBeaconDb
 
         List<Response<?>> responses = transaction.execGetResponse();
 
-        if (((Long) responses.get(0).get() & (Long) responses.get(1).get()) != 1)
-        {
-            throw new NotFoundException("Could not delete user " + id);
-        }
-
-        log.info("Deleted User " + id);
+        return (Long) responses.get(0).get() & (Long) responses.get(1).get();
     }
 
     @Override
