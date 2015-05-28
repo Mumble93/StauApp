@@ -1,9 +1,10 @@
 package com.sta.dhbw.stauapp;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 
@@ -54,27 +55,22 @@ public class SplashScreen extends FragmentActivity
         }
 
     }
-
-
-    private class ConnectionTester extends AsyncTask<Void, Void, Boolean>
+    @Override
+    protected void onStart()
     {
-
-        @Override
-        protected void onPreExecute()
+        final ProgressDialog dialog = new ProgressDialog(getApplicationContext());
+        dialog.setCancelable(false);
+        dialog.setIndeterminate(true);
+        dialog.setMessage("Some work is done here...");
+        dialog.show();
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable()
         {
-            super.onPreExecute();
-        }
-
-        @Override
-        protected Boolean doInBackground(Void... params)
-        {
-            return true;
-        }
-
-        @Override
-        protected void onPostExecute(Boolean result)
-        {
-            super.onPostExecute(result);
-        }
+            @Override
+            public void run()
+            {
+                dialog.dismiss();
+            }
+        }, 5000);
     }
 }

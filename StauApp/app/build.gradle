@@ -25,6 +25,9 @@ android {
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'com.android.support:appcompat-v7:22.1.1'
-    compile 'com.google.android.gms:play-services:7.3.0'
+    compile ("com.google.android.gms:play-services:7.3.0") {
+        exclue module: 'httpcore'
+        exclude module: 'httpclient'
+    }
     compile project (':jambeaconrestclient')
 }
