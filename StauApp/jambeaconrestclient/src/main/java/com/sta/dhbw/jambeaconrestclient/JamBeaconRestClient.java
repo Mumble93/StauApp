@@ -1,6 +1,5 @@
 package com.sta.dhbw.jambeaconrestclient;
 
-import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.sta.dhbw.jambeaconrestclient.exception.JamBeaconException;
@@ -22,46 +21,32 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+@Consumes({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
+@Produces({MediaType.TEXT_PLAIN})
 public class JamBeaconRestClient
 {
     private static final String TAG = JamBeaconRestClient.class.getSimpleName();
 
-    private static boolean isInDebugMode;
-
-    private String SERVER_ENDPOINT;
+    private static String SERVER_ENDPOINT;
     private String REGISTER_ENDPOINT = SERVER_ENDPOINT + "users/register";
     private String UNREGISTER_ENDPOINT = SERVER_ENDPOINT + "users/unregister/{userId}";
+    private String UPDATE_ENDPOINT = SERVER_ENDPOINT + "/users/update";
     private String JAM_ENDPOINT = SERVER_ENDPOINT + "jams";
 
-    private static String X_REQUEST_ID;
     private static final String X_REQUEST_HEADER = "X-Request-Id";
 
-    public JamBeaconRestClient(SharedPreferences sharedPreferences)
+    public JamBeaconRestClient()
     {
-        isInDebugMode = android.os.Debug.isDebuggerConnected();
+        Log.i(TAG, "Starting in DEBUG Mode.");
+        SERVER_ENDPOINT = "http://localhost:8080/api/v1/";
+        //SERVER_ENDPOINT = "http://www.dhbw-jambeacon.org/api/v1/";
 
-        X_REQUEST_ID = sharedPreferences.getString("registration_id", "");
-        Log.i(TAG, "Initialized with registration id " + X_REQUEST_ID);
-
-        if (isInDebugMode)
-        {
-            Log.i(TAG, "Starting in DEBUG Mode.");
-            this.SERVER_ENDPOINT = "http://localhost:8080/api/v1/";
-        } else
-        {
-            this.SERVER_ENDPOINT = "http://www.dhbw-jambeacon.org/api/v1/";
-        }
     }
 
+
     @POST
-    @Consumes(MediaType.TEXT_PLAIN)
-    @Produces(MediaType.TEXT_PLAIN)
     public String registerUser(String userId) throws JamBeaconException
     {
-        if (isInDebugMode)
-        {
-            userId = "appTestUser42";
-        }
         Client client = ClientBuilder.newClient();
         WebTarget target = client.target(REGISTER_ENDPOINT);
         Response response = target.request().post(Entity.text(userId));
@@ -73,6 +58,26 @@ public class JamBeaconRestClient
         } else if (response.getStatusInfo() != Response.Status.CREATED)
         {
             String error = "ERROR while registering at server.";
+            Log.e(TAG, error);
+            throw new JamBeaconException(error);
+        } else
+        {
+            return response.readEntity(String.class);
+        }
+    }
+
+    @PUT
+    public String updateUser(String oldId, String updatedId, String xRequestHeader) throws JamBeaconException
+    {
+        Client client = ClientBuilder.newClient();
+        WebTarget target = client.target(UPDATE_ENDPOINT);
+        Response response = target.request()
+                .header(X_REQUEST_HEADER, xRequestHeader)
+                .put(Entity.text(oldId + ";" + updatedId));
+        Response.StatusType statusType = response.getStatusInfo();
+        if (statusType != Response.Status.OK || statusType != Response.Status.CREATED)
+        {
+            String error = "ERROR while updating User Registration at Server. Status was " + statusType.getStatusCode();
             Log.e(TAG, error);
             throw new JamBeaconException(error);
         } else
@@ -100,14 +105,13 @@ public class JamBeaconRestClient
 
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    public TrafficJam postTrafficJam(TrafficJam trafficJam) throws JamBeaconException
+    public TrafficJam postTrafficJam(TrafficJam trafficJam, String xRequestId) throws JamBeaconException
     {
         Client client = ClientBuilder.newClient();
         WebTarget target = client.target(JAM_ENDPOINT);
 
         Response response = target.request()
-                .header(X_REQUEST_HEADER, X_REQUEST_ID)
+                .header(X_REQUEST_HEADER, xRequestId)
                 .post(Entity.json(trafficJam));
 
         response.close();
@@ -170,13 +174,12 @@ public class JamBeaconRestClient
     }
 
     @PUT
-    @Consumes(MediaType.APPLICATION_JSON)
-    public void updateTrafficJam(TrafficJam trafficJam) throws JamBeaconException
+    public void updateTrafficJam(TrafficJam trafficJam, String xRequestId) throws JamBeaconException
     {
         Client client = ClientBuilder.newClient();
         WebTarget target = client.target(JAM_ENDPOINT);
         Response response = target.request()
-                .header(X_REQUEST_HEADER, X_REQUEST_ID)
+                .header(X_REQUEST_HEADER, xRequestId)
                 .put(Entity.json(trafficJam));
 
         Response.StatusType statusType = response.getStatusInfo();
@@ -189,9 +192,20 @@ public class JamBeaconRestClient
         }
     }
 
+    @GET
+    public static boolean serverIsAvailable()
+    {
+        Client client = ClientBuilder.newClient();
+        WebTarget target = client.target(SERVER_ENDPOINT + "/heartbeat");
+        Response response = target.request().get();
+        Response.StatusType statusType = response.getStatusInfo();
+        response.close();
+        return statusType == Response.Status.OK;
+    }
+
     public String getEndpoint()
     {
-        return this.SERVER_ENDPOINT;
+        return SERVER_ENDPOINT;
     }
 
 }

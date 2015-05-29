@@ -1,4 +1,4 @@
-package com.sta.dhbw.stauapp;
+package com.sta.dhbw.stauapp.services;
 
 import android.app.Service;
 import android.content.Intent;
@@ -11,6 +11,8 @@ import android.os.IBinder;
 import android.util.Log;
 
 import com.sta.dhbw.jambeaconrestclient.TrafficJam;
+import com.sta.dhbw.stauapp.MainActivity;
+import com.sta.dhbw.stauapp.settings.PrefFields;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -40,7 +42,7 @@ public class BeaconService extends Service
     public int onStartCommand(Intent intent, int flags, int id)
     {
         Log.i(TAG, "Beacon Service was started.");
-        minDistance = intent.getDoubleExtra(MainActivity.MIN_DISTANCE_FOR_ALERT, 2.25);
+        minDistance = intent.getDoubleExtra(PrefFields.MIN_DISTANCE_FOR_ALERT, 2.25);
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 500, 0, locationListener);
         return super.onStartCommand(intent, flags, id);
     }

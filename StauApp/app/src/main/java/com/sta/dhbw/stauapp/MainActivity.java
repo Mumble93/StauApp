@@ -7,8 +7,9 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.DialogFragment;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -21,26 +22,26 @@ import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
-import com.sta.dhbw.stauapp.Utils.ConnectionIssue;
+import com.sta.dhbw.jambeaconrestclient.JamBeaconRestClient;
+import com.sta.dhbw.stauapp.gcm.RequestGcmTokenService;
+import com.sta.dhbw.stauapp.services.BeaconService;
+import com.sta.dhbw.stauapp.settings.PrefFields;
+import com.sta.dhbw.stauapp.util.Utils;
+import com.sta.dhbw.stauapp.util.Utils.ConnectionIssue;
+import com.sta.dhbw.stauapp.dialogs.ConnectionIssueDialogFragment;
 import com.sta.dhbw.stauapp.settings.SettingsActivity;
 
 import java.io.IOException;
 
 
-public class MainActivity extends ActionBarActivity
+public class MainActivity extends AppCompatActivity
 {
     private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
-    public static final String PROPERTY_REG_ID = "registration_id";
-    private static final String PROPERTY_APP_VERSION = "appVersion";
-
-    public static final String MIN_DISTANCE_FOR_ALERT = "minDistanceForAlert";
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
-    private static final String SENDER_ID = "821661182636";
-
     TextView mDisplay;
-    Button routeButton, jamListButton, beaconButton;
+    Button registerButton, jamListButton, beaconButton;
     GoogleCloudMessaging gcm;
 
     boolean beaconStarted = false;
@@ -56,18 +57,20 @@ public class MainActivity extends ActionBarActivity
         setContentView(R.layout.activity_main);
 
         mDisplay = (TextView) findViewById(R.id.message_display);
-        routeButton = (Button) findViewById(R.id.new_route);
+        registerButton = (Button) findViewById(R.id.register_user_btn);
         jamListButton = (Button) findViewById(R.id.view_traffic_issues);
         beaconButton = (Button) findViewById(R.id.start_beacon);
 
         context = getApplicationContext();
+        
 
-        routeButton.setOnClickListener(new View.OnClickListener()
+        registerButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
-            public void onClick(View v)
+        public void onClick(View v)
             {
-                //ToDo: Starte Routeneingabefenster und Standorterfassung (optional)
+                Log.i(TAG, "Registering");
+                registerInBackground();
             }
         });
 
@@ -87,10 +90,10 @@ public class MainActivity extends ActionBarActivity
             {
                 if (!beaconStarted)
                 {
-                    startBeacon();
+                    MainActivity.this.startBeacon();
                 } else
                 {
-                    stopBeacon();
+                    MainActivity.this.stopBeacon();
                 }
             }
         });
@@ -104,7 +107,7 @@ public class MainActivity extends ActionBarActivity
             if (regId.isEmpty())
             {
                 Log.i(TAG, "Registering for GCM Services");
-                registerInBackground();
+                //registerInBackground();
             }
         } else
         {
@@ -122,20 +125,20 @@ public class MainActivity extends ActionBarActivity
             //Check internet connection
             if (!Utils.checkInternetConnection(context))
             {
-                DialogFragment fragment = AlertDialogFragment.newInstance(ConnectionIssue.NETWORTK_NOT_AVAILABLE);
+                DialogFragment fragment = ConnectionIssueDialogFragment.newInstance(ConnectionIssue.NETWORK_NOT_AVAILABLE);
                 fragment.show(getSupportFragmentManager(), "dialog");
             } else
             {
                 //Check if server is reachable
                 if (!Utils.checkServerAvailability())
                 {
-                    DialogFragment fragment = AlertDialogFragment.newInstance(ConnectionIssue.SERVER_NOT_AVAILABLE);
+                    DialogFragment fragment = ConnectionIssueDialogFragment.newInstance(ConnectionIssue.SERVER_NOT_AVAILABLE);
                     fragment.show(getSupportFragmentManager(), "dialog");
                 }
             }
         } else
         {
-            DialogFragment fragment = AlertDialogFragment.newInstance(ConnectionIssue.GPS_NOT_AVAILABLE);
+            DialogFragment fragment = ConnectionIssueDialogFragment.newInstance(ConnectionIssue.GPS_NOT_AVAILABLE);
             fragment.show(getSupportFragmentManager(), "dialog");
         }
 
@@ -201,15 +204,15 @@ public class MainActivity extends ActionBarActivity
      */
     private String getRegistrationId(Context context)
     {
-        final SharedPreferences prefs = getGCMPreferences(context);
-        String registrationId = prefs.getString(PROPERTY_REG_ID, "");
+        final SharedPreferences prefs = getSharedPreferences();
+        String registrationId = prefs.getString(PrefFields.PROPERTY_REG_ID, "");
         if (registrationId == null || registrationId.isEmpty())
         {
             Log.i(TAG, "Registration not found.");
             return "";
         }
         //Check for app updates
-        int registeredVersion = prefs.getInt(PROPERTY_APP_VERSION, Integer.MIN_VALUE);
+        int registeredVersion = prefs.getInt(PrefFields.PROPERTY_APP_VERSION, Integer.MIN_VALUE);
         int currentVersion = getAppVersion(context);
         if (registeredVersion != currentVersion)
         {
@@ -222,10 +225,9 @@ public class MainActivity extends ActionBarActivity
     /**
      * @return The application's {@code SharedPreferences}
      */
-    private SharedPreferences getGCMPreferences(Context context)
+    private SharedPreferences getSharedPreferences()
     {
-        return getSharedPreferences(MainActivity.class.getSimpleName(),
-                Context.MODE_PRIVATE);
+        return PreferenceManager.getDefaultSharedPreferences(context);
     }
 
     /**
@@ -248,64 +250,13 @@ public class MainActivity extends ActionBarActivity
     private void registerInBackground()
     {
         Log.i(TAG, "Getting new Registration Id");
-        new AsyncTask<Void, Void, String>()
-        {
-            @Override
-            protected String doInBackground(Void... params)
-            {
-                String msg = "";
-                try
-                {
-                    if (gcm == null)
-                    {
-                        gcm = GoogleCloudMessaging.getInstance(context);
-                    }
-                    regId = gcm.register(SENDER_ID);
-                    msg = "Device registered, registration ID = " + regId;
-                    //Send Id to server, so server can send messages to app
-                    sendRegistrationIdToBackend();
-                    //Persist registration Id
-                    storeRegistrationId(context, regId);
-                } catch (IOException ex)
-                {
-                    msg = "Error: " + ex.getMessage();
-                    //ToDo: Implement mechanism to prompt user to re-register
-                }
-                return msg;
-            }
 
-            @Override
-            protected void onPostExecute(String msg)
-            {
-                //ToDo: For development only. DELETE BEFORE RELEASE!
-                mDisplay.append(msg + "\n");
-            }
-        }.execute(null, null, null);
-    }
+        SharedPreferences sharedPreferences = getSharedPreferences();
 
-    /**
-     * Send registration Id to application server, so server can send messages to device.
-     */
-    private void sendRegistrationIdToBackend()
-    {
-        //ToDo: I don't think it is necessary to do this, still keeping it here just in case.
-    }
+        Intent intent = new Intent(this, RequestGcmTokenService.class);
+        startService(intent);
 
-    /**
-     * Stores the registration Id and appVersion Code in {@code SharedPreferences}.
-     *
-     * @param context The application's context
-     * @param regId   registration Id
-     */
-    private void storeRegistrationId(Context context, String regId)
-    {
-        final SharedPreferences prefs = getGCMPreferences(context);
-        int appVersion = getAppVersion(context);
-        Log.i(TAG, "Saving regId on app version " + appVersion);
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putString(PROPERTY_REG_ID, regId);
-        editor.putInt(PROPERTY_APP_VERSION, appVersion);
-        editor.apply();
+        sharedPreferences.edit().putInt(PrefFields.PROPERTY_APP_VERSION, getAppVersion(context)).apply();
     }
 
     private void startBeacon()
@@ -313,7 +264,7 @@ public class MainActivity extends ActionBarActivity
         Toast.makeText(context, "Beacon aktiviert", Toast.LENGTH_SHORT).show();
         //ToDo: Display additional notification with icon
         Intent beaconServiceIntent = new Intent(context, BeaconService.class);
-        beaconServiceIntent.putExtra(MIN_DISTANCE_FOR_ALERT, 2.25);
+        beaconServiceIntent.putExtra(PrefFields.MIN_DISTANCE_FOR_ALERT, 2.25);
         startService(beaconServiceIntent);
         beaconButton.setText(R.string.stop_beacon_btn);
         beaconStarted = true;

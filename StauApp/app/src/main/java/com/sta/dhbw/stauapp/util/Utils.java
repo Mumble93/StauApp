@@ -1,17 +1,23 @@
-package com.sta.dhbw.stauapp;
+package com.sta.dhbw.stauapp.util;
 
 import android.content.Context;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
+import com.sta.dhbw.jambeaconrestclient.JamBeaconRestClient;
+
 public class Utils
 {
-    public static enum ConnectionIssue
+    public enum ConnectionIssue
     {
-        GPS_NOT_AVAILABLE, NETWORTK_NOT_AVAILABLE, SERVER_NOT_AVAILABLE, NETWORK_TIMEOUT
+        GPS_NOT_AVAILABLE, NETWORK_NOT_AVAILABLE, SERVER_NOT_AVAILABLE, NETWORK_TIMEOUT,
     }
 
+    public enum RestIssue
+    {
+        GCM_REGISTRATION_AT_SERVER_FAILED
+    }
 
     /**
      * Uses the {@code LocationManager} to determine whether the GPS Provider is enabled or not.
@@ -39,14 +45,14 @@ public class Utils
     }
 
     /**
-     * Checks if the server is reachable.
+     * Checks if the server is working and reachable.
      *
-     * @return TRUE if server is reachable, FALSE if not.
+     * @return TRUE if server is working and reachable, FALSE if not.
      */
 
     public static boolean checkServerAvailability()
     {
-        return true;
+        return JamBeaconRestClient.serverIsAvailable();
     }
 
 }

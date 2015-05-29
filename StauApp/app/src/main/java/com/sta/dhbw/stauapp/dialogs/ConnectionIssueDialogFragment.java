@@ -1,4 +1,4 @@
-package com.sta.dhbw.stauapp;
+package com.sta.dhbw.stauapp.dialogs;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -7,13 +7,14 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
 
-import com.sta.dhbw.stauapp.Utils.ConnectionIssue;
+import com.sta.dhbw.stauapp.R;
+import com.sta.dhbw.stauapp.util.Utils.ConnectionIssue;
 
-public class AlertDialogFragment extends DialogFragment
+public class ConnectionIssueDialogFragment extends DialogFragment
 {
-    public static AlertDialogFragment newInstance(ConnectionIssue issue, boolean finishOnConfirm)
+    public static ConnectionIssueDialogFragment newInstance(ConnectionIssue issue, boolean finishOnConfirm)
     {
-        AlertDialogFragment frag = new AlertDialogFragment();
+        ConnectionIssueDialogFragment frag = new ConnectionIssueDialogFragment();
         Bundle args = new Bundle();
         args.putSerializable("issue", issue);
         args.putBoolean("finishOnConfirm", finishOnConfirm);
@@ -21,7 +22,7 @@ public class AlertDialogFragment extends DialogFragment
         return frag;
     }
 
-    public static AlertDialogFragment newInstance(ConnectionIssue issue)
+    public static ConnectionIssueDialogFragment newInstance(ConnectionIssue issue)
     {
         return newInstance(issue, true);
     }
@@ -44,7 +45,7 @@ public class AlertDialogFragment extends DialogFragment
                         dialog.dismiss();
                         if (finishOnConfirm)
                         {
-                            getActivity().finish();
+                            ConnectionIssueDialogFragment.this.getActivity().finish();
                         }
                     }
                 });
@@ -55,7 +56,7 @@ public class AlertDialogFragment extends DialogFragment
                 title = R.string.gps_alert_dialog_title;
                 message = R.string.gps_alert_message;
                 break;
-            case NETWORTK_NOT_AVAILABLE:
+            case NETWORK_NOT_AVAILABLE:
                 title = R.string.network_alert_dialog_title;
                 message = R.string.network_alert_message;
                 break;

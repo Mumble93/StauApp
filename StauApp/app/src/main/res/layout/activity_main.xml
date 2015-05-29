@@ -20,12 +20,6 @@
         android:orientation="vertical">
 
         <Button
-            android:id="@+id/new_route"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/enter_new_route"/>
-
-        <Button
             android:id="@+id/view_traffic_issues"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -36,5 +30,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/start_beacon_btn"/>
+
+        <Button
+            android:id="@+id/register_user_btn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Register User"/>
     </LinearLayout>
 </RelativeLayout>

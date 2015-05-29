@@ -64,6 +64,49 @@ public class UserRestServiceEndpoint
         return response;
     }
 
+    @Path("update")
+    @PUT
+    @Consumes("text/plain")
+    @Produces("text/plain")
+    public Response updateUser(@HeaderParam("X-Request-Id") String requestId, String credentials) throws StauserverException
+    {
+        if (null == requestId || requestId.isEmpty())
+        {
+            return Response.status(Status.EXPECTATION_FAILED).entity("X-Request-Id must be set.").build();
+        }
+
+        if (null == credentials || credentials.isEmpty())
+        {
+            return Response.status(Status.BAD_REQUEST).entity("No credentials received.").build();
+        }
+
+        if (dao.userIsRegistered(requestId))
+        {
+            String[] credentialArray = credentials.split(";");
+            if (credentialArray.length > 2)
+            {
+                return Response.status(Status.BAD_REQUEST).entity("Request must be in format <oldId>;<newId>").build();
+            } else if (credentialArray.length == 2)
+            {
+                String oldId = credentialArray[0];
+                String updatedId = credentialArray[1];
+                dao.updateUser(oldId, updatedId);
+                return Response.ok().entity(Util.hash256(updatedId)).build();
+            } else if (credentials.length() == 1)
+            {
+                String userId = credentialArray[0];
+                return registerUser(userId);
+            } else
+            {
+                return Response.status(Status.NOT_ACCEPTABLE).entity("Delivered content not accepted.").build();
+            }
+        } else
+        {
+            return Response.status(Status.UNAUTHORIZED).entity("Must register first.").build();
+        }
+    }
+
+
     @Path("unregister/{id}")
     @DELETE
     public Response unregisterUser(@PathParam("id") String userId) throws StauserverException

@@ -8,7 +8,9 @@ import android.os.Handler;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 
-import com.sta.dhbw.stauapp.Utils.ConnectionIssue;
+import com.sta.dhbw.stauapp.util.Utils;
+import com.sta.dhbw.stauapp.util.Utils.ConnectionIssue;
+import com.sta.dhbw.stauapp.dialogs.ConnectionIssueDialogFragment;
 
 public class SplashScreen extends FragmentActivity
 {
@@ -31,14 +33,14 @@ public class SplashScreen extends FragmentActivity
             //Check internet connection
             if (!Utils.checkInternetConnection(context))
             {
-                DialogFragment fragment = AlertDialogFragment.newInstance(ConnectionIssue.NETWORTK_NOT_AVAILABLE);
+                DialogFragment fragment = ConnectionIssueDialogFragment.newInstance(ConnectionIssue.NETWORK_NOT_AVAILABLE);
                 fragment.show(getSupportFragmentManager(), "dialog");
             } else
             {
                 //Check if server is reachable
                 if (!Utils.checkServerAvailability())
                 {
-                    DialogFragment fragment = AlertDialogFragment.newInstance(ConnectionIssue.SERVER_NOT_AVAILABLE);
+                    DialogFragment fragment = ConnectionIssueDialogFragment.newInstance(ConnectionIssue.SERVER_NOT_AVAILABLE);
                     fragment.show(getSupportFragmentManager(), "dialog");
                 } else
                 {
@@ -50,7 +52,7 @@ public class SplashScreen extends FragmentActivity
             }
         } else
         {
-            DialogFragment fragment = AlertDialogFragment.newInstance(ConnectionIssue.GPS_NOT_AVAILABLE);
+            DialogFragment fragment = ConnectionIssueDialogFragment.newInstance(ConnectionIssue.GPS_NOT_AVAILABLE);
             fragment.show(getSupportFragmentManager(), "dialog");
         }
 
@@ -60,8 +62,15 @@ public class SplashScreen extends FragmentActivity
     {
         final ProgressDialog dialog = new ProgressDialog(getApplicationContext());
         dialog.setCancelable(false);
+        dialog.setCanceledOnTouchOutside(false);
         dialog.setIndeterminate(true);
-        dialog.setMessage("Some work is done here...");
+        if(android.os.Debug.isDebuggerConnected())
+        {
+            dialog.setMessage("Welcome, developer...");
+        }else
+        {
+            dialog.setMessage("Some work is done here...");
+        }
         dialog.show();
         Handler handler = new Handler();
         handler.postDelayed(new Runnable()

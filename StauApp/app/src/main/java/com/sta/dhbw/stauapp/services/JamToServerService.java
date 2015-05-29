@@ -1,4 +1,4 @@
-package com.sta.dhbw.stauapp;
+package com.sta.dhbw.stauapp.services;
 
 
 import android.app.IntentService;
@@ -32,8 +32,7 @@ public final class JamToServerService extends IntentService
             {
                 if (null == client)
                 {
-                    client = new JamBeaconRestClient(
-                            this.getSharedPreferences(JamToServerService.class.getSimpleName(), Context.MODE_PRIVATE));
+                    client = new JamBeaconRestClient();
                 }
             }
         }

@@ -11,7 +11,6 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-
 import java.util.List;
 import java.util.UUID;
 
