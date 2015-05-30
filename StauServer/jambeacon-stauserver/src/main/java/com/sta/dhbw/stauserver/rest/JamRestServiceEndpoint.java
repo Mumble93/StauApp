@@ -9,6 +9,7 @@ import javax.ejb.EJB;
 import javax.ws.rs.*;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericEntity;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import java.util.List;
@@ -51,7 +52,7 @@ public class JamRestServiceEndpoint
             return Response.status(Status.NOT_FOUND).build();
         }
 
-        return Response.status(Status.OK).entity(Entity.json(jam)).build();
+        return Response.status(Status.OK).entity(jam).build();
 
     }
 
@@ -82,9 +83,9 @@ public class JamRestServiceEndpoint
                     dao.storeTrafficJam(trafficJamResource);
                 } catch (StauserverException e)
                 {
-                    return Response.status(Status.BAD_REQUEST).entity(Entity.json(trafficJamResource)).build();
+                    return Response.status(Status.BAD_REQUEST).entity(trafficJamResource).build();
                 }
-                return Response.status(Status.CREATED).entity(Entity.json(trafficJamResource)).build();
+                return Response.status(Status.CREATED).entity(trafficJamResource).build();
             }
         }
     }
@@ -112,7 +113,7 @@ public class JamRestServiceEndpoint
         {
             trafficJamResource.setOwner(requestId);
             dao.storeTrafficJam(trafficJamResource);
-            return Response.status(Status.CREATED).entity(Entity.json(trafficJamResource)).build();
+            return Response.status(Status.CREATED).entity(trafficJamResource).build();
         }
 
         //Continue if Traffic Jam was found
@@ -123,7 +124,7 @@ public class JamRestServiceEndpoint
             existingJam.setLongitude(trafficJamResource.getLongitude());
             existingJam.setTimestamp(trafficJamResource.getTimestamp());
             dao.updateTrafficJam(existingJam);
-            return Response.status(Status.OK).entity(Entity.json(existingJam)).build();
+            return Response.status(Status.OK).entity(existingJam).build();
         } else
         {
             return Response.status(Status.UNAUTHORIZED).build();

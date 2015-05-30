@@ -1,21 +1,46 @@
 package com.sta.dhbw.stauapp;
 
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 
+import com.sta.dhbw.jambeaconrestclient.JamBeaconRestClient;
+import com.sta.dhbw.stauapp.dialogs.ConnectionIssueDialogFragment;
+import com.sta.dhbw.jambeaconrestclient.IAvailabilityCheck;
 import com.sta.dhbw.stauapp.util.Utils;
 import com.sta.dhbw.stauapp.util.Utils.ConnectionIssue;
-import com.sta.dhbw.stauapp.dialogs.ConnectionIssueDialogFragment;
 
-public class SplashScreen extends FragmentActivity
+import static com.sta.dhbw.jambeaconrestclient.JamBeaconRestClient.*;
+
+public class SplashScreen extends FragmentActivity implements IAvailabilityCheck
 {
-    Context context;
     private static final String TAG = SplashScreen.class.getSimpleName();
+
+    private Intent intent;
+
+    ProgressDialog progressDialog;
+
+
+    @Override
+    public void onCheckComplete(boolean success)
+    {
+        if(success)
+        {
+            if(progressDialog.isShowing())
+            {
+                progressDialog.dismiss();
+            }
+
+            startActivity(intent);
+            finish();
+        } else
+        {
+            DialogFragment fragment = ConnectionIssueDialogFragment.newInstance(ConnectionIssue.SERVER_NOT_AVAILABLE);
+            fragment.show(getSupportFragmentManager(), "dialog");
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -23,32 +48,23 @@ public class SplashScreen extends FragmentActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
 
-        context = getApplicationContext();
+        JamBeaconRestClient restClient = new JamBeaconRestClient();
 
-        final Intent intent = new Intent(context, MainActivity.class);
+        intent = new Intent(this, MainActivity.class);
+        intent.putExtra("client", restClient);
 
         //Check GPS availability
-        if (Utils.checkGps(context))
+        if (Utils.checkGps(this))
         {
             //Check internet connection
-            if (!Utils.checkInternetConnection(context))
+            if (!Utils.checkInternetConnection(this))
             {
                 DialogFragment fragment = ConnectionIssueDialogFragment.newInstance(ConnectionIssue.NETWORK_NOT_AVAILABLE);
                 fragment.show(getSupportFragmentManager(), "dialog");
             } else
             {
-                //Check if server is reachable
-                if (!Utils.checkServerAvailability())
-                {
-                    DialogFragment fragment = ConnectionIssueDialogFragment.newInstance(ConnectionIssue.SERVER_NOT_AVAILABLE);
-                    fragment.show(getSupportFragmentManager(), "dialog");
-                } else
-                {
-                    //If code reaches this line, all checks should have passed
-                    //ToDo: Get known traffic issues
-                    startActivity(intent);
-                    finish();
-                }
+                AvailabilityTask availabilityTask = new AvailabilityTask(this);
+                availabilityTask.execute();
             }
         } else
         {
@@ -57,29 +73,22 @@ public class SplashScreen extends FragmentActivity
         }
 
     }
+
     @Override
     protected void onStart()
     {
-        final ProgressDialog dialog = new ProgressDialog(getApplicationContext());
-        dialog.setCancelable(false);
-        dialog.setCanceledOnTouchOutside(false);
-        dialog.setIndeterminate(true);
-        if(android.os.Debug.isDebuggerConnected())
+        super.onStart();
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setCancelable(false);
+        progressDialog.setCanceledOnTouchOutside(false);
+        progressDialog.setIndeterminate(true);
+        if (android.os.Debug.isDebuggerConnected())
         {
-            dialog.setMessage("Welcome, developer...");
-        }else
+            progressDialog.setMessage("Welcome, developer...");
+        } else
         {
-            dialog.setMessage("Some work is done here...");
+            progressDialog.setMessage("Some work is done here...");
         }
-        dialog.show();
-        Handler handler = new Handler();
-        handler.postDelayed(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                dialog.dismiss();
-            }
-        }, 5000);
+        progressDialog.show();
     }
 }

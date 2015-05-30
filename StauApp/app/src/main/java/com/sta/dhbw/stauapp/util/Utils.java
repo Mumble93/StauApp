@@ -4,8 +4,15 @@ import android.content.Context;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.AsyncTask;
 
 import com.sta.dhbw.jambeaconrestclient.JamBeaconRestClient;
+import com.sta.dhbw.jambeaconrestclient.exception.JamBeaconException;
+
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class Utils
 {
@@ -44,15 +51,15 @@ public class Utils
         return networkInfo != null && networkInfo.isConnected();
     }
 
-    /**
-     * Checks if the server is working and reachable.
-     *
-     * @return TRUE if server is working and reachable, FALSE if not.
-     */
-
-    public static boolean checkServerAvailability()
+    public class AvailabiltyCheckerTask extends AsyncTask<Context, Void, Boolean>
     {
-        return JamBeaconRestClient.serverIsAvailable();
-    }
+        private JamBeaconRestClient restClient;
 
+
+        @Override
+        protected Boolean doInBackground(Context... params)
+        {
+            return null;
+        }
+    }
 }

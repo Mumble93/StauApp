@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.DialogFragment;
@@ -22,19 +21,20 @@ import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
+import com.sta.dhbw.jambeaconrestclient.IAvailabilityCheck;
 import com.sta.dhbw.jambeaconrestclient.JamBeaconRestClient;
+import com.sta.dhbw.stauapp.dialogs.ConnectionIssueDialogFragment;
 import com.sta.dhbw.stauapp.gcm.RequestGcmTokenService;
 import com.sta.dhbw.stauapp.services.BeaconService;
 import com.sta.dhbw.stauapp.settings.PrefFields;
+import com.sta.dhbw.stauapp.settings.SettingsActivity;
 import com.sta.dhbw.stauapp.util.Utils;
 import com.sta.dhbw.stauapp.util.Utils.ConnectionIssue;
-import com.sta.dhbw.stauapp.dialogs.ConnectionIssueDialogFragment;
-import com.sta.dhbw.stauapp.settings.SettingsActivity;
 
-import java.io.IOException;
+import static com.sta.dhbw.jambeaconrestclient.JamBeaconRestClient.*;
 
 
-public class MainActivity extends AppCompatActivity
+public class MainActivity extends AppCompatActivity implements IAvailabilityCheck
 {
     private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
 
@@ -43,6 +43,7 @@ public class MainActivity extends AppCompatActivity
     TextView mDisplay;
     Button registerButton, jamListButton, beaconButton;
     GoogleCloudMessaging gcm;
+    JamBeaconRestClient restClient;
 
     boolean beaconStarted = false;
 
@@ -62,12 +63,13 @@ public class MainActivity extends AppCompatActivity
         beaconButton = (Button) findViewById(R.id.start_beacon);
 
         context = getApplicationContext();
-        
+
+        restClient = (JamBeaconRestClient) getIntent().getSerializableExtra("client");
 
         registerButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
-        public void onClick(View v)
+            public void onClick(View v)
             {
                 Log.i(TAG, "Registering");
                 registerInBackground();
@@ -130,11 +132,8 @@ public class MainActivity extends AppCompatActivity
             } else
             {
                 //Check if server is reachable
-                if (!Utils.checkServerAvailability())
-                {
-                    DialogFragment fragment = ConnectionIssueDialogFragment.newInstance(ConnectionIssue.SERVER_NOT_AVAILABLE);
-                    fragment.show(getSupportFragmentManager(), "dialog");
-                }
+                AvailabilityTask availabilityTask = new AvailabilityTask(this);
+                availabilityTask.execute();
             }
         } else
         {
@@ -276,6 +275,16 @@ public class MainActivity extends AppCompatActivity
         stopService(new Intent(context, BeaconService.class));
         beaconButton.setText(R.string.start_beacon_btn);
         beaconStarted = false;
+    }
+
+    @Override
+    public void onCheckComplete(boolean success)
+    {
+        if(!success)
+        {
+            DialogFragment fragment = ConnectionIssueDialogFragment.newInstance(ConnectionIssue.SERVER_NOT_AVAILABLE);
+            fragment.show(getSupportFragmentManager(), "dialog");
+        }
     }
 }
 
