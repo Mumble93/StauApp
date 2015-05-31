@@ -8,18 +8,21 @@ import android.util.Log;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.google.android.gms.iid.InstanceID;
+import com.sta.dhbw.jambeaconrestclient.ICallBackInterface;
 import com.sta.dhbw.jambeaconrestclient.JamBeaconRestClient;
+import com.sta.dhbw.jambeaconrestclient.TrafficJam;
 import com.sta.dhbw.jambeaconrestclient.exception.JamBeaconException;
 import com.sta.dhbw.stauapp.R;
 import com.sta.dhbw.stauapp.dialogs.RestIssueBroadcastReceiver;
 import com.sta.dhbw.stauapp.settings.PrefFields;
 
 import java.io.IOException;
+import java.util.List;
 
-public class RequestGcmTokenService extends IntentService
+public class RequestGcmTokenService extends IntentService implements ICallBackInterface
 {
     public static final String TAG = RequestGcmTokenService.class.getSimpleName();
-    final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+    private SharedPreferences sharedPreferences;
 
 
     public RequestGcmTokenService()
@@ -30,6 +33,8 @@ public class RequestGcmTokenService extends IntentService
     @Override
     protected void onHandleIntent(Intent intent)
     {
+
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         //Check if a token has already been sent to the server
         //This determines whether a POST or a PUT request is issued
         boolean alreadySentToServer = sharedPreferences.getBoolean(PrefFields.SENT_TOKEN_TO_SERVER, false);
@@ -41,17 +46,11 @@ public class RequestGcmTokenService extends IntentService
                     GoogleCloudMessaging.INSTANCE_ID_SCOPE, null);
             Log.d(TAG, "GCM Registration Token: " + token);
 
-            String xRequestId = sendTokenToServer(token, alreadySentToServer);
-
             SharedPreferences.Editor editor = sharedPreferences.edit();
 
-            editor.putString(PrefFields.PROPERTY_REG_ID, token)
-                    .putString(PrefFields.PROPERTY_X_REQUEST_ID, xRequestId);
-            if (!alreadySentToServer)
-            {
-                editor.putBoolean(PrefFields.SENT_TOKEN_TO_SERVER, true).apply();
-            }
-            editor.apply();
+            sendTokenToServer(token, alreadySentToServer);
+
+            editor.putString(PrefFields.PROPERTY_REG_ID, token).apply();
         } catch (IOException e)
         {
             String error = "ERROR getting Registration Token: " + e.getMessage();
@@ -60,17 +59,17 @@ public class RequestGcmTokenService extends IntentService
         }
     }
 
-    private String sendTokenToServer(String token, boolean isUpdate)
+    private void sendTokenToServer(String token, boolean isUpdate)
     {
         JamBeaconRestClient restClient = new JamBeaconRestClient();
-        String xRequestId = "";
         if (isUpdate)
         {
             String oldToken = sharedPreferences.getString(PrefFields.PROPERTY_REG_ID, "");
             String existingRequestId = sharedPreferences.getString(PrefFields.PROPERTY_X_REQUEST_ID, "");
             try
             {
-                xRequestId = restClient.updateUser(oldToken, token, existingRequestId);
+                Log.d(TAG, "Updating registered user.");
+                restClient.updateUser(oldToken, token, existingRequestId, this);
             } catch (JamBeaconException e)
             {
                 Intent intent = new Intent().setAction(RestIssueBroadcastReceiver.REST_ISSUE)
@@ -81,7 +80,8 @@ public class RequestGcmTokenService extends IntentService
         {
             try
             {
-                xRequestId = restClient.registerUser(token);
+                Log.d(TAG, "Registering new User");
+                restClient.registerUser(token, this);
             } catch (JamBeaconException e)
             {
                 Intent intent = new Intent().setAction(RestIssueBroadcastReceiver.REST_ISSUE)
@@ -89,6 +89,45 @@ public class RequestGcmTokenService extends IntentService
                 this.sendBroadcast(intent);
             }
         }
-        return xRequestId;
+    }
+
+    @Override
+    public void onCheckComplete(boolean success)
+    {
+
+    }
+
+    @Override
+    public void onRegisterComplete(String xRequestId)
+    {
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(PrefFields.PROPERTY_X_REQUEST_ID, xRequestId)
+                .putBoolean(PrefFields.SENT_TOKEN_TO_SERVER, true).apply();
+    }
+
+    @Override
+    public void onUserUpdateComplete(String updatedXRequestId)
+    {
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(PrefFields.PROPERTY_X_REQUEST_ID, updatedXRequestId).
+                putBoolean(PrefFields.SENT_TOKEN_TO_SERVER, true).apply();
+    }
+
+    @Override
+    public void onGetTrafficJamComplete(TrafficJam trafficJam)
+    {
+
+    }
+
+    @Override
+    public void onGetJamListComplete(List<TrafficJam> trafficJamList)
+    {
+
+    }
+
+    @Override
+    public void onTrafficJamUpdateComplete(TrafficJam updatedJam)
+    {
+
     }
 }

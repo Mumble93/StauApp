@@ -225,7 +225,7 @@ public class RedisDao implements IBeaconDb
 
         if (jedis.sismember(USER_HASH_SET, hash))
         {
-            return 0;
+            return 0L;
         } else
         {
             Transaction transaction = jedis.multi();

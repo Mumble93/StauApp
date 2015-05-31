@@ -18,9 +18,5 @@
             android:title="Ein Textfeld"
             android:key="textpreference_1"
             android:summary="Das wird noch geändert"/>
-        <EditTextPreference
-            android:editable="false"
-            android:key="registrationId_preference"
-            android:summary="GCM Registrierungs Id"/>
     </PreferenceCategory>
 </PreferenceScreen>

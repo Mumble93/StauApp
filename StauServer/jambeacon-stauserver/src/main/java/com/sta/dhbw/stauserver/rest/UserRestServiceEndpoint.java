@@ -37,12 +37,12 @@ public class UserRestServiceEndpoint
 
         long result = dao.createUser(userId, userIdHash);
         //User was added to set
-        if (result > 0)
+        if (result > 0L)
         {
             status = Status.CREATED;
         }
         //User was already contained in set
-        else if (result == 0)
+        else if (result == 0L)
         {
             status = Status.CONFLICT;
         }

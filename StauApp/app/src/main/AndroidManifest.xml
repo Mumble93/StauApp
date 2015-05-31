@@ -51,33 +51,40 @@
             <intent-filter>
                 <action android:name="com.google.android.c2dm.intent.RECEIVE"/>
                 <action android:name="com.google.android.c2dm.intent.REGISTRATION"/>
+
                 <category android:name="com.sta.dhbw.stauapp"/>
             </intent-filter>
         </receiver>
-        <receiver android:name=".dialogs.RestIssueBroadcastReceiver">
+        <receiver
+            android:name=".dialogs.RestIssueBroadcastReceiver"
+            android:exported="false">
             <intent-filter>
                 <action android:name="com.sta.dhbw.stauapp.REST_ISSUE"/>
             </intent-filter>
         </receiver>
 
-        <service android:name=".gcm.StauAppGcmListenerService"
-                 android:exported="false">
+        <service
+            android:name=".gcm.StauAppGcmListenerService"
+            android:exported="false">
             <intent-filter>
                 <action android:name="com.google.android.c2dm.intent.RECEIVE"/>
             </intent-filter>
         </service>
-        <service android:name=".gcm.InstanceIdListenerService"
-                 android:exported="false">
+        <service
+            android:name=".gcm.InstanceIdListenerService"
+            android:exported="false">
             <intent-filter>
                 <action android:name="com.google.android.gms.iid.InstanceID"/>
             </intent-filter>
         </service>
-        <service android:name=".gcm.RequestGcmTokenService"
-                 android:exported="false"/>
+        <service
+            android:name=".gcm.RequestGcmTokenService"
+            android:exported="false"/>
         <service
             android:name=".services.BeaconService"
             android:exported="false"/>
-        <service android:name=".services.JamToServerService"
+        <service
+            android:name=".services.JamToServerService"
             android:exported="false"/>
     </application>
 

@@ -21,8 +21,9 @@ import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
-import com.sta.dhbw.jambeaconrestclient.IAvailabilityCheck;
+import com.sta.dhbw.jambeaconrestclient.ICallBackInterface;
 import com.sta.dhbw.jambeaconrestclient.JamBeaconRestClient;
+import com.sta.dhbw.jambeaconrestclient.TrafficJam;
 import com.sta.dhbw.stauapp.dialogs.ConnectionIssueDialogFragment;
 import com.sta.dhbw.stauapp.gcm.RequestGcmTokenService;
 import com.sta.dhbw.stauapp.services.BeaconService;
@@ -31,17 +32,19 @@ import com.sta.dhbw.stauapp.settings.SettingsActivity;
 import com.sta.dhbw.stauapp.util.Utils;
 import com.sta.dhbw.stauapp.util.Utils.ConnectionIssue;
 
+import java.util.List;
+
 import static com.sta.dhbw.jambeaconrestclient.JamBeaconRestClient.*;
 
 
-public class MainActivity extends AppCompatActivity implements IAvailabilityCheck
+public class MainActivity extends AppCompatActivity implements ICallBackInterface
 {
     private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
-    TextView mDisplay;
-    Button registerButton, jamListButton, beaconButton;
+    TextView mDisplay, requestIdDisplay, appVersionDisplay;
+    Button jamListButton, beaconButton;
     GoogleCloudMessaging gcm;
     JamBeaconRestClient restClient;
 
@@ -57,8 +60,10 @@ public class MainActivity extends AppCompatActivity implements IAvailabilityChec
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mDisplay = (TextView) findViewById(R.id.message_display);
-        registerButton = (Button) findViewById(R.id.register_user_btn);
+        mDisplay = (TextView) findViewById(R.id.token_display);
+        requestIdDisplay = (TextView) findViewById(R.id.request_id_display);
+        appVersionDisplay = (TextView) findViewById(R.id.app_version_display);
+
         jamListButton = (Button) findViewById(R.id.view_traffic_issues);
         beaconButton = (Button) findViewById(R.id.start_beacon);
 
@@ -66,7 +71,7 @@ public class MainActivity extends AppCompatActivity implements IAvailabilityChec
 
         restClient = (JamBeaconRestClient) getIntent().getSerializableExtra("client");
 
-        registerButton.setOnClickListener(new View.OnClickListener()
+        /*registerButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
             public void onClick(View v)
@@ -74,7 +79,7 @@ public class MainActivity extends AppCompatActivity implements IAvailabilityChec
                 Log.i(TAG, "Registering");
                 registerInBackground();
             }
-        });
+        });*/
 
         jamListButton.setOnClickListener(new View.OnClickListener()
         {
@@ -109,7 +114,13 @@ public class MainActivity extends AppCompatActivity implements IAvailabilityChec
             if (regId.isEmpty())
             {
                 Log.i(TAG, "Registering for GCM Services");
-                //registerInBackground();
+                registerInBackground();
+            } else
+            {
+                SharedPreferences sharedPreferences = getSharedPreferences();
+                mDisplay.setText("Token: " + sharedPreferences.getString(PrefFields.PROPERTY_REG_ID, ""));
+                requestIdDisplay.setText("Request Id: " + sharedPreferences.getString(PrefFields.PROPERTY_X_REQUEST_ID, ""));
+                appVersionDisplay.setText("AppVersion: " + sharedPreferences.getInt(PrefFields.PROPERTY_APP_VERSION, 0));
             }
         } else
         {
@@ -260,9 +271,9 @@ public class MainActivity extends AppCompatActivity implements IAvailabilityChec
 
     private void startBeacon()
     {
-        Toast.makeText(context, "Beacon aktiviert", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Beacon aktiviert", Toast.LENGTH_SHORT).show();
         //ToDo: Display additional notification with icon
-        Intent beaconServiceIntent = new Intent(context, BeaconService.class);
+        Intent beaconServiceIntent = new Intent(this, BeaconService.class);
         beaconServiceIntent.putExtra(PrefFields.MIN_DISTANCE_FOR_ALERT, 2.25);
         startService(beaconServiceIntent);
         beaconButton.setText(R.string.stop_beacon_btn);
@@ -271,8 +282,8 @@ public class MainActivity extends AppCompatActivity implements IAvailabilityChec
 
     private void stopBeacon()
     {
-        Toast.makeText(context, "Beacon deaktiviert", Toast.LENGTH_SHORT).show();
-        stopService(new Intent(context, BeaconService.class));
+        Toast.makeText(this, "Beacon deaktiviert", Toast.LENGTH_SHORT).show();
+        stopService(new Intent(this, BeaconService.class));
         beaconButton.setText(R.string.start_beacon_btn);
         beaconStarted = false;
     }
@@ -285,6 +296,36 @@ public class MainActivity extends AppCompatActivity implements IAvailabilityChec
             DialogFragment fragment = ConnectionIssueDialogFragment.newInstance(ConnectionIssue.SERVER_NOT_AVAILABLE);
             fragment.show(getSupportFragmentManager(), "dialog");
         }
+    }
+
+    @Override
+    public void onRegisterComplete(String xRequestId)
+    {
+
+    }
+
+    @Override
+    public void onUserUpdateComplete(String updatedXRequestId)
+    {
+
+    }
+
+    @Override
+    public void onGetTrafficJamComplete(TrafficJam trafficJam)
+    {
+
+    }
+
+    @Override
+    public void onGetJamListComplete(List<TrafficJam> trafficJamList)
+    {
+
+    }
+
+    @Override
+    public void onTrafficJamUpdateComplete(TrafficJam updatedJam)
+    {
+
     }
 }
 

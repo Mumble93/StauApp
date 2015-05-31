@@ -6,15 +6,18 @@ import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 
+import com.sta.dhbw.jambeaconrestclient.ICallBackInterface;
 import com.sta.dhbw.jambeaconrestclient.JamBeaconRestClient;
+import com.sta.dhbw.jambeaconrestclient.TrafficJam;
 import com.sta.dhbw.stauapp.dialogs.ConnectionIssueDialogFragment;
-import com.sta.dhbw.jambeaconrestclient.IAvailabilityCheck;
 import com.sta.dhbw.stauapp.util.Utils;
 import com.sta.dhbw.stauapp.util.Utils.ConnectionIssue;
 
-import static com.sta.dhbw.jambeaconrestclient.JamBeaconRestClient.*;
+import java.util.List;
 
-public class SplashScreen extends FragmentActivity implements IAvailabilityCheck
+import static com.sta.dhbw.jambeaconrestclient.JamBeaconRestClient.AvailabilityTask;
+
+public class SplashScreen extends FragmentActivity implements ICallBackInterface
 {
     private static final String TAG = SplashScreen.class.getSimpleName();
 
@@ -22,17 +25,46 @@ public class SplashScreen extends FragmentActivity implements IAvailabilityCheck
 
     ProgressDialog progressDialog;
 
+    @Override
+    public void onRegisterComplete(String xRequestId)
+    {
+
+    }
+
+    @Override
+    public void onUserUpdateComplete(String updatedXRequestId)
+    {
+
+    }
+
+    @Override
+    public void onGetTrafficJamComplete(TrafficJam trafficJam)
+    {
+
+    }
+
+    @Override
+    public void onGetJamListComplete(List<TrafficJam> trafficJamList)
+    {
+
+    }
+
+    @Override
+    public void onTrafficJamUpdateComplete(TrafficJam updatedJam)
+    {
+
+    }
 
     @Override
     public void onCheckComplete(boolean success)
     {
-        if(success)
+        if (progressDialog.isShowing())
         {
-            if(progressDialog.isShowing())
-            {
-                progressDialog.dismiss();
-            }
+            progressDialog.dismiss();
+        }
 
+        if (success)
+        {
             startActivity(intent);
             finish();
         } else

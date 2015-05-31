@@ -5,7 +5,11 @@ import android.util.Log;
 
 import com.sta.dhbw.jambeaconrestclient.exception.JamBeaconException;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.Serializable;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -36,20 +40,125 @@ public class JamBeaconRestClient implements Serializable
         //SERVER_ENDPOINT = "http://www.dhbw-jambeacon.org/rest/api/v1/";
         REGISTER_ENDPOINT = SERVER_ENDPOINT + "users/register";
         UNREGISTER_ENDPOINT = SERVER_ENDPOINT + "users/unregister/";
-        UPDATE_ENDPOINT = SERVER_ENDPOINT + "/users/update";
+        UPDATE_ENDPOINT = SERVER_ENDPOINT + "users/update";
         JAM_ENDPOINT = SERVER_ENDPOINT + "jams";
         HEARTBEAT_ENDPOINT = SERVER_ENDPOINT + "heartbeat";
     }
 
 
-    public String registerUser(String userId) throws JamBeaconException
+    public void registerUser(String userId, final ICallBackInterface caller) throws JamBeaconException
     {
-        return null;
+        Log.d(TAG, "REGISTERING USER");
+        new AsyncTask<String, Void, String>()
+        {
+            HttpURLConnection connection;
+
+            @Override
+            protected String doInBackground(String... params)
+            {
+                String userId = params[0];
+                try
+                {
+                    connection = getConnection(HTTP_POST, REGISTER_ENDPOINT);
+                    connection.setDoInput(true);
+                    connection.setDoOutput(true);
+
+                    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
+                    writer.write(userId);
+                    writer.flush();
+                    writer.close();
+
+                    int statusCode = connection.getResponseCode();
+                    switch (statusCode)
+                    {
+                        case HttpURLConnection.HTTP_CREATED:
+                            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                            String xRequestId = reader.readLine();
+                            Log.d(TAG, "Response at REGISTER was " + xRequestId);
+                            reader.close();
+                            return xRequestId;
+                        case HttpURLConnection.HTTP_CONFLICT:
+                            Log.e(TAG, "Already registered with Id " + userId);
+                            return "";
+                        default:
+                            Log.e(TAG, "Could not register, response code was " + statusCode);
+                            return "";
+                    }
+                } catch (JamBeaconException e)
+                {
+                    Log.e(TAG, e.getMessage());
+                    return "";
+                } catch (IOException e)
+                {
+                    Log.e(TAG, e.getMessage());
+                    return "";
+                }
+            }
+
+            @Override
+            protected void onPostExecute(String result)
+            {
+                connection.disconnect();
+                caller.onRegisterComplete(result);
+            }
+        }.execute(userId);
+
     }
 
-    public String updateUser(String oldId, String updatedId, String xRequestHeader) throws JamBeaconException
+    public void updateUser(String oldId, String updatedId, final String xRequestHeader, final ICallBackInterface caller) throws JamBeaconException
     {
-        return null;
+        Log.d(TAG, "UPDATING USER");
+        new AsyncTask<String, Void, String>()
+        {
+            HttpURLConnection connection;
+
+            @Override
+            protected String doInBackground(String... params)
+            {
+                try
+                {
+                    connection = getConnection(HTTP_PUT, UPDATE_ENDPOINT);
+                    connection.setDoInput(true);
+                    connection.setDoOutput(true);
+                    connection.setRequestProperty(X_REQUEST_HEADER, xRequestHeader);
+
+                    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
+                    writer.write(params[0]);
+                    writer.flush();
+                    writer.close();
+
+                    int statusCode = connection.getResponseCode();
+
+                    if(statusCode==HttpURLConnection.HTTP_OK|| statusCode== HttpURLConnection.HTTP_CREATED)
+                    {
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                        String updatedXRequestId = reader.readLine();
+                        reader.close();
+                        return updatedXRequestId;
+                    } else
+                    {
+                        Log.e(TAG, "Error updating User Id, status was " + statusCode);
+                        return "";
+                    }
+                } catch (JamBeaconException e)
+                {
+                    Log.e(TAG, "Error getting connection. " + e.getMessage());
+                    return "";
+                } catch (IOException e)
+                {
+                    Log.e(TAG, "Error while sending to server. " + e.getMessage());
+                    return "";
+                }
+            }
+
+            @Override
+            protected void onPostExecute(String result)
+            {
+                connection.disconnect();
+                caller.onUserUpdateComplete(result);
+            }
+        }.execute(oldId + ";" + updatedId);
+
     }
 
     public void unregisterUser(String userId) throws JamBeaconException
@@ -80,9 +189,9 @@ public class JamBeaconRestClient implements Serializable
 
     public static class AvailabilityTask extends AsyncTask<Void, Void, Boolean>
     {
-        private IAvailabilityCheck callback;
+        private ICallBackInterface callback;
 
-        public AvailabilityTask(IAvailabilityCheck callback)
+        public AvailabilityTask(ICallBackInterface callback)
         {
             this.callback = callback;
         }
@@ -96,6 +205,7 @@ public class JamBeaconRestClient implements Serializable
             {
                 HttpURLConnection connection = getConnection(HTTP_GET, HEARTBEAT_ENDPOINT);
                 responseCode = connection.getResponseCode();
+                connection.disconnect();
             } catch (JamBeaconException e)
             {
                 String error = "Error getting connection. " + e.getMessage();
@@ -132,7 +242,7 @@ public class JamBeaconRestClient implements Serializable
             connection.setRequestMethod(method);
             String acceptHeader = getAcceptHeader(method, endpoint);
             String contentType = getContentType(method, endpoint);
-            if(!HEARTBEAT_ENDPOINT.equals(endpoint))
+            if (!HEARTBEAT_ENDPOINT.equals(endpoint))
             {
                 connection.setRequestProperty("Accept", acceptHeader);
                 connection.setRequestProperty("Content-Type", contentType);
