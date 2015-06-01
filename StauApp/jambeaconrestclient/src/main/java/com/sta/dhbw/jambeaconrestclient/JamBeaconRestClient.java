@@ -3,6 +3,8 @@ package com.sta.dhbw.jambeaconrestclient;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sta.dhbw.jambeaconrestclient.exception.JamBeaconException;
 
 import java.io.BufferedReader;
@@ -14,6 +16,7 @@ import java.io.Serializable;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,9 +38,14 @@ public class JamBeaconRestClient implements Serializable
 
     public JamBeaconRestClient()
     {
-        Log.i(TAG, "Starting in DEBUG Mode.");
-        SERVER_ENDPOINT = "http://localhost:8080/rest/api/v1/";
-        //SERVER_ENDPOINT = "http://www.dhbw-jambeacon.org/rest/api/v1/";
+        if (android.os.Debug.isDebuggerConnected())
+        {
+            Log.d(TAG, "Starting in DEBUG Mode.");
+            SERVER_ENDPOINT = "http://localhost:8080/rest/api/v1/";
+        } else
+        {
+            SERVER_ENDPOINT = "http://www.dhbw-jambeacon.org/rest/api/v1/";
+        }
         REGISTER_ENDPOINT = SERVER_ENDPOINT + "users/register";
         UNREGISTER_ENDPOINT = SERVER_ENDPOINT + "users/unregister/";
         UPDATE_ENDPOINT = SERVER_ENDPOINT + "users/update";
@@ -46,7 +54,7 @@ public class JamBeaconRestClient implements Serializable
     }
 
 
-    public void registerUser(String userId, final ICallBackInterface caller) throws JamBeaconException
+    public void registerUser(String userId, final IUserCallback caller) throws JamBeaconException
     {
         Log.d(TAG, "REGISTERING USER");
         new AsyncTask<String, Void, String>()
@@ -105,7 +113,7 @@ public class JamBeaconRestClient implements Serializable
 
     }
 
-    public void updateUser(String oldId, String updatedId, final String xRequestHeader, final ICallBackInterface caller) throws JamBeaconException
+    public void updateUser(String oldId, String updatedId, final String xRequestHeader, final IUserCallback caller) throws JamBeaconException
     {
         Log.d(TAG, "UPDATING USER");
         new AsyncTask<String, Void, String>()
@@ -129,7 +137,7 @@ public class JamBeaconRestClient implements Serializable
 
                     int statusCode = connection.getResponseCode();
 
-                    if(statusCode==HttpURLConnection.HTTP_OK|| statusCode== HttpURLConnection.HTTP_CREATED)
+                    if (statusCode == HttpURLConnection.HTTP_OK || statusCode == HttpURLConnection.HTTP_CREATED)
                     {
                         BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                         String updatedXRequestId = reader.readLine();
@@ -172,9 +180,59 @@ public class JamBeaconRestClient implements Serializable
         return null;
     }
 
-    public List<TrafficJam> getTrafficJamList() throws JamBeaconException
+    public void getTrafficJamList(final ITrafficJamCallback caller)
     {
-        return null;
+        Log.d(TAG, "GETTING JAM LIST");
+        new AsyncTask<Void, Void, List<TrafficJam>>()
+        {
+            HttpURLConnection connection;
+
+            @Override
+            protected List<TrafficJam> doInBackground(Void... params)
+            {
+                try
+                {
+                    connection = getConnection(HTTP_GET, JAM_ENDPOINT);
+                    connection.setDoInput(true);
+                    int statusCode = connection.getResponseCode();
+                    String response;
+                    if (statusCode == HttpURLConnection.HTTP_OK)
+                    {
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                        response = reader.readLine();
+                        reader.close();
+                        Log.d(TAG, "Response was " + response);
+                        return new ObjectMapper().readValue(response, new TypeReference<List<TrafficJam>>()
+                        {
+                        });
+                    } else if (statusCode == HttpURLConnection.HTTP_NO_CONTENT)
+                    {
+                        Log.d(TAG, "No Traffic Jams on Server.");
+                        return new ArrayList<>();
+                    } else
+                    {
+                        Log.e(TAG, "Error getting List of Traffic Jams. Status was " + statusCode);
+                        return new ArrayList<>();
+                    }
+
+                } catch (JamBeaconException e)
+                {
+                    Log.e(TAG, "Error getting connection. " + e.getMessage());
+                    return new ArrayList<>();
+                } catch (IOException e)
+                {
+                    Log.e(TAG, "Error reading response. " + e.getMessage());
+                    return new ArrayList<>();
+                }
+            }
+
+            @Override
+            protected void onPostExecute(List<TrafficJam> result)
+            {
+                connection.disconnect();
+                caller.onGetJamListComplete(result);
+            }
+        }.execute();
     }
 
     public TrafficJam getTrafficJam(UUID id) throws JamBeaconException
@@ -187,42 +245,39 @@ public class JamBeaconRestClient implements Serializable
 
     }
 
-    public static class AvailabilityTask extends AsyncTask<Void, Void, Boolean>
+
+    public void checkServerAvailability(final IHeartbeatCallback caller)
     {
-        private ICallBackInterface callback;
-
-        public AvailabilityTask(ICallBackInterface callback)
+        new AsyncTask<Void, Void, Boolean>()
         {
-            this.callback = callback;
-        }
+            @Override
+            protected Boolean doInBackground(Void... params)
+            {
+                int responseCode = 418;//I'm a teapot
 
-        @Override
-        protected Boolean doInBackground(Void... params)
-        {
-            int responseCode = 418;//I'm a teapot
-
-            try
-            {
-                HttpURLConnection connection = getConnection(HTTP_GET, HEARTBEAT_ENDPOINT);
-                responseCode = connection.getResponseCode();
-                connection.disconnect();
-            } catch (JamBeaconException e)
-            {
-                String error = "Error getting connection. " + e.getMessage();
-                Log.e(TAG, error);
-            } catch (IOException e)
-            {
-                String error = "ERROR getting HeartBeat Response Code. " + e.getMessage();
-                Log.e(TAG, error);
+                try
+                {
+                    HttpURLConnection connection = getConnection(HTTP_GET, HEARTBEAT_ENDPOINT);
+                    responseCode = connection.getResponseCode();
+                    connection.disconnect();
+                } catch (JamBeaconException e)
+                {
+                    String error = "Error getting connection. " + e.getMessage();
+                    Log.e(TAG, error);
+                } catch (IOException e)
+                {
+                    String error = "ERROR getting HeartBeat Response Code. " + e.getMessage();
+                    Log.e(TAG, error);
+                }
+                return HttpURLConnection.HTTP_OK == responseCode;
             }
-            return HttpURLConnection.HTTP_OK == responseCode;
-        }
 
-        @Override
-        protected void onPostExecute(Boolean result)
-        {
-            callback.onCheckComplete(result);
-        }
+            @Override
+            protected void onPostExecute(Boolean result)
+            {
+                caller.onCheckComplete(result);
+            }
+        }.execute();
     }
 
 
@@ -245,7 +300,10 @@ public class JamBeaconRestClient implements Serializable
             if (!HEARTBEAT_ENDPOINT.equals(endpoint))
             {
                 connection.setRequestProperty("Accept", acceptHeader);
-                connection.setRequestProperty("Content-Type", contentType);
+                if (!method.equals(HTTP_GET))
+                {
+                    connection.setRequestProperty("Content-Type", contentType);
+                }
             }
         } catch (MalformedURLException e)
         {

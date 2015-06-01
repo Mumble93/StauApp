@@ -13,6 +13,6 @@ public class StauAppGcmListenerService extends GcmListenerService
     public void onMessageReceived(String from, Bundle data)
     {
         String message = data.getString("message");
-        Log.d(TAG, "Received message from ");
+        Log.d(TAG, "Received message from " + from + ". Message was " + message);
     }
 }

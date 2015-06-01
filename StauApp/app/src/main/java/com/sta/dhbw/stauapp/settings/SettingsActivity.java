@@ -1,9 +1,9 @@
 package com.sta.dhbw.stauapp.settings;
 
+import android.app.Activity;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 
-public class SettingsActivity extends AppCompatActivity
+public class SettingsActivity extends Activity
 {
     @Override
     protected void onCreate(Bundle savedInstanceState)

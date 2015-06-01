@@ -25,9 +25,9 @@ public final class TrafficJamDeserializer extends JsonDeserializer<TrafficJam>
         JsonNode jsonNode = jp.getCodec().readTree(jp);
 
         UUID jamId = UUID.fromString(jsonNode.get(Constants.JAM_ID).asText());
-        double latitude = (Double) jsonNode.get(Constants.JAM_LATITUDE).numberValue();
-        double longitude = (Double) jsonNode.get(Constants.JAM_LONGITUDE).numberValue();
-        long timestamp = (Long) jsonNode.get(Constants.JAM_TIME).numberValue();
+        double latitude = jsonNode.get(Constants.JAM_LATITUDE).doubleValue();
+        double longitude = jsonNode.get(Constants.JAM_LONGITUDE).doubleValue();
+        long timestamp = jsonNode.get(Constants.JAM_TIME).longValue();
 
         location.setLatitude(latitude);
         location.setLongitude(longitude);

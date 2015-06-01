@@ -11,7 +11,6 @@ import android.os.IBinder;
 import android.util.Log;
 
 import com.sta.dhbw.jambeaconrestclient.TrafficJam;
-import com.sta.dhbw.stauapp.MainActivity;
 import com.sta.dhbw.stauapp.settings.PrefFields;
 
 import java.text.SimpleDateFormat;
@@ -142,7 +141,7 @@ public class BeaconService extends Service
 
     private void sendTrafficJamToServer(TrafficJam jam)
     {
-        Intent intent = new Intent(getApplicationContext(),JamToServerService.class);
+        Intent intent = new Intent(getApplicationContext(), JamToServerService.class);
         intent.putExtra("jam", jam);
         startService(intent);
     }

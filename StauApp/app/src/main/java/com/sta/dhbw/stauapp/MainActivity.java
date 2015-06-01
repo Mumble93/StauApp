@@ -1,5 +1,7 @@
 package com.sta.dhbw.stauapp;
 
+import android.app.Activity;
+import android.app.DialogFragment;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -7,8 +9,6 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v4.app.DialogFragment;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -21,9 +21,8 @@ import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
-import com.sta.dhbw.jambeaconrestclient.ICallBackInterface;
+import com.sta.dhbw.jambeaconrestclient.IHeartbeatCallback;
 import com.sta.dhbw.jambeaconrestclient.JamBeaconRestClient;
-import com.sta.dhbw.jambeaconrestclient.TrafficJam;
 import com.sta.dhbw.stauapp.dialogs.ConnectionIssueDialogFragment;
 import com.sta.dhbw.stauapp.gcm.RequestGcmTokenService;
 import com.sta.dhbw.stauapp.services.BeaconService;
@@ -32,21 +31,18 @@ import com.sta.dhbw.stauapp.settings.SettingsActivity;
 import com.sta.dhbw.stauapp.util.Utils;
 import com.sta.dhbw.stauapp.util.Utils.ConnectionIssue;
 
-import java.util.List;
 
-import static com.sta.dhbw.jambeaconrestclient.JamBeaconRestClient.*;
-
-
-public class MainActivity extends AppCompatActivity implements ICallBackInterface
+public class MainActivity extends Activity implements IHeartbeatCallback
 {
     private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
+    public static JamBeaconRestClient restClient;
+
     TextView mDisplay, requestIdDisplay, appVersionDisplay;
     Button jamListButton, beaconButton;
     GoogleCloudMessaging gcm;
-    JamBeaconRestClient restClient;
 
     boolean beaconStarted = false;
 
@@ -60,6 +56,8 @@ public class MainActivity extends AppCompatActivity implements ICallBackInterfac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        restClient = new JamBeaconRestClient();
+
         mDisplay = (TextView) findViewById(R.id.token_display);
         requestIdDisplay = (TextView) findViewById(R.id.request_id_display);
         appVersionDisplay = (TextView) findViewById(R.id.app_version_display);
@@ -69,7 +67,6 @@ public class MainActivity extends AppCompatActivity implements ICallBackInterfac
 
         context = getApplicationContext();
 
-        restClient = (JamBeaconRestClient) getIntent().getSerializableExtra("client");
 
         /*registerButton.setOnClickListener(new View.OnClickListener()
         {
@@ -86,7 +83,8 @@ public class MainActivity extends AppCompatActivity implements ICallBackInterfac
             @Override
             public void onClick(View v)
             {
-                //ToDo: Start Ansicht f�r Stauliste
+                Intent intent = new Intent(v.getContext(), JamListActivity.class);
+                startActivity(intent);
             }
         });
 
@@ -117,6 +115,7 @@ public class MainActivity extends AppCompatActivity implements ICallBackInterfac
                 registerInBackground();
             } else
             {
+                Toast.makeText(this, "You are registered", Toast.LENGTH_SHORT).show();
                 SharedPreferences sharedPreferences = getSharedPreferences();
                 mDisplay.setText("Token: " + sharedPreferences.getString(PrefFields.PROPERTY_REG_ID, ""));
                 requestIdDisplay.setText("Request Id: " + sharedPreferences.getString(PrefFields.PROPERTY_X_REQUEST_ID, ""));
@@ -139,17 +138,16 @@ public class MainActivity extends AppCompatActivity implements ICallBackInterfac
             if (!Utils.checkInternetConnection(context))
             {
                 DialogFragment fragment = ConnectionIssueDialogFragment.newInstance(ConnectionIssue.NETWORK_NOT_AVAILABLE);
-                fragment.show(getSupportFragmentManager(), "dialog");
+                fragment.show(getFragmentManager(), "dialog");
             } else
             {
                 //Check if server is reachable
-                AvailabilityTask availabilityTask = new AvailabilityTask(this);
-                availabilityTask.execute();
+                restClient.checkServerAvailability(this);
             }
         } else
         {
             DialogFragment fragment = ConnectionIssueDialogFragment.newInstance(ConnectionIssue.GPS_NOT_AVAILABLE);
-            fragment.show(getSupportFragmentManager(), "dialog");
+            fragment.show(getFragmentManager(), "dialog");
         }
 
         checkPlayServices();
@@ -291,41 +289,11 @@ public class MainActivity extends AppCompatActivity implements ICallBackInterfac
     @Override
     public void onCheckComplete(boolean success)
     {
-        if(!success)
+        if (!success)
         {
             DialogFragment fragment = ConnectionIssueDialogFragment.newInstance(ConnectionIssue.SERVER_NOT_AVAILABLE);
-            fragment.show(getSupportFragmentManager(), "dialog");
+            fragment.show(getFragmentManager(), "dialog");
         }
-    }
-
-    @Override
-    public void onRegisterComplete(String xRequestId)
-    {
-
-    }
-
-    @Override
-    public void onUserUpdateComplete(String updatedXRequestId)
-    {
-
-    }
-
-    @Override
-    public void onGetTrafficJamComplete(TrafficJam trafficJam)
-    {
-
-    }
-
-    @Override
-    public void onGetJamListComplete(List<TrafficJam> trafficJamList)
-    {
-
-    }
-
-    @Override
-    public void onTrafficJamUpdateComplete(TrafficJam updatedJam)
-    {
-
     }
 }
 
