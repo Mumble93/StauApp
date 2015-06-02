@@ -6,15 +6,19 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 
+import com.google.android.gms.maps.model.LatLng;
 import com.sta.dhbw.jambeaconrestclient.ITrafficJamCallback;
 import com.sta.dhbw.jambeaconrestclient.JamBeaconRestClient;
 import com.sta.dhbw.jambeaconrestclient.TrafficJam;
@@ -25,6 +29,8 @@ import java.util.List;
 
 public class JamListActivity extends ListActivity implements ITrafficJamCallback
 {
+    private static final String TAG = JamListActivity.class.getSimpleName();
+
     private JamBeaconRestClient restClient = MainActivity.restClient;
     private static List<TrafficJam> trafficJams;
 
@@ -42,6 +48,22 @@ public class JamListActivity extends ListActivity implements ITrafficJamCallback
         dialog.show();
 
         restClient.getTrafficJamList(this);
+
+        final ListView listView = getListView();
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener()
+        {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id)
+            {
+                Log.d(TAG, "Item " + position + " clicked");
+                TrafficJam jam = (TrafficJam) listView.getItemAtPosition(position);
+                LatLng latLng = new LatLng(jam.getLocation().getLatitude(), jam.getLocation().getLongitude());
+                Intent intent = new Intent(view.getContext(), JamMapActivity.class);
+                intent.putExtra("location", latLng);
+                startActivity(intent);
+            }
+        });
 
         ActionBar actionBar = getActionBar();
         if (actionBar != null)
