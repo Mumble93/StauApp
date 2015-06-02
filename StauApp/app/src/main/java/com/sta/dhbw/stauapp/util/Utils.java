@@ -8,6 +8,10 @@ import android.os.AsyncTask;
 
 import com.sta.dhbw.jambeaconrestclient.JamBeaconRestClient;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 public class Utils
 {
     public enum ConnectionIssue
@@ -18,6 +22,13 @@ public class Utils
     public enum RestIssue
     {
         GCM_REGISTRATION_AT_SERVER_FAILED
+    }
+
+    public static String timstampToString(long timestamp)
+    {
+        DateFormat dateFormat = DateFormat.getTimeInstance();
+        Date date = new Date(timestamp);
+        return dateFormat.format(date);
     }
 
     /**

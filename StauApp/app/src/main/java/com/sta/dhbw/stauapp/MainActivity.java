@@ -1,9 +1,14 @@
 package com.sta.dhbw.stauapp;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.DialogFragment;
+import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -39,6 +44,10 @@ public class MainActivity extends Activity implements IHeartbeatCallback
     private static final String TAG = MainActivity.class.getSimpleName();
 
     public static JamBeaconRestClient restClient;
+    ProgressDialog registrationProgressDialog;
+    RestIssueBroadcastReceiver restIssueBroadcastReceiver = null;
+    boolean receiverIsRegistered = false;
+
 
     TextView mDisplay, requestIdDisplay, appVersionDisplay;
     Button jamListButton, beaconButton;
@@ -55,6 +64,11 @@ public class MainActivity extends Activity implements IHeartbeatCallback
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        restIssueBroadcastReceiver = new RestIssueBroadcastReceiver();
+        registerReceiver(restIssueBroadcastReceiver, new IntentFilter(RestIssueBroadcastReceiver.REST_EVENT));
+        receiverIsRegistered = true;
+        Log.d(TAG, "Registered RestIssueBroadcastReceiver");
 
         restClient = new JamBeaconRestClient();
 
@@ -115,7 +129,6 @@ public class MainActivity extends Activity implements IHeartbeatCallback
                 registerInBackground();
             } else
             {
-                Toast.makeText(this, "You are registered", Toast.LENGTH_SHORT).show();
                 SharedPreferences sharedPreferences = getSharedPreferences();
                 mDisplay.setText("Token: " + sharedPreferences.getString(PrefFields.PROPERTY_REG_ID, ""));
                 requestIdDisplay.setText("Request Id: " + sharedPreferences.getString(PrefFields.PROPERTY_X_REQUEST_ID, ""));
@@ -132,6 +145,13 @@ public class MainActivity extends Activity implements IHeartbeatCallback
     protected void onResume()
     {
         super.onResume();
+        if (!receiverIsRegistered)
+        {
+            restIssueBroadcastReceiver = new RestIssueBroadcastReceiver();
+            registerReceiver(restIssueBroadcastReceiver, new IntentFilter(RestIssueBroadcastReceiver.REST_EVENT));
+            receiverIsRegistered = true;
+            Log.d(TAG, "Registered RestIssueBroadcastReceiver");
+        }
         if (Utils.checkGps(context))
         {
             //Check internet connection
@@ -151,6 +171,18 @@ public class MainActivity extends Activity implements IHeartbeatCallback
         }
 
         checkPlayServices();
+    }
+
+    @Override
+    public void onPause()
+    {
+        super.onPause();
+        if (receiverIsRegistered)
+        {
+            unregisterReceiver(restIssueBroadcastReceiver);
+            receiverIsRegistered = false;
+            Log.d(TAG, "Unregistered RestIssueBroadcastReceiver");
+        }
     }
 
     @Override
@@ -284,6 +316,42 @@ public class MainActivity extends Activity implements IHeartbeatCallback
         stopService(new Intent(this, BeaconService.class));
         beaconButton.setText(R.string.start_beacon_btn);
         beaconStarted = false;
+    }
+
+    public class RestIssueBroadcastReceiver extends BroadcastReceiver
+    {
+        public static final String REST_EVENT = "com.sta.dhbw.stauapp.REST_EVENT";
+
+        private final String TAG = RestIssueBroadcastReceiver.class.getSimpleName();
+
+        @Override
+        public void onReceive(Context context, Intent intent)
+        {
+            boolean success = intent.getBooleanExtra("success", false);
+            String reason = intent.getStringExtra("reason");
+
+            if (success)
+            {
+                Toast.makeText(context, reason, Toast.LENGTH_LONG).show();
+            } else
+            {
+                AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                builder.setTitle("Error");
+                builder.setMessage(reason);
+                builder.setPositiveButton(R.string.dialog_close, new DialogInterface.OnClickListener()
+                {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which)
+                    {
+                        dialog.dismiss();
+                    }
+                });
+                builder.create().show();
+            }
+
+            Log.d(TAG, "Received REST Event");
+
+        }
     }
 
     @Override

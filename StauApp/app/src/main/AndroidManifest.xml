@@ -62,13 +62,6 @@
                 <category android:name="com.sta.dhbw.stauapp"/>
             </intent-filter>
         </receiver>
-        <receiver
-            android:name=".dialogs.RestIssueBroadcastReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.sta.dhbw.stauapp.REST_ISSUE"/>
-            </intent-filter>
-        </receiver>
 
         <service
             android:name=".gcm.StauAppGcmListenerService"

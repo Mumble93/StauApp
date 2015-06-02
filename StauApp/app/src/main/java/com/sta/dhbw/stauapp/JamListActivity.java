@@ -2,6 +2,7 @@ package com.sta.dhbw.stauapp;
 
 import android.app.ActionBar;
 import android.app.ListActivity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -18,6 +19,7 @@ import com.sta.dhbw.jambeaconrestclient.ITrafficJamCallback;
 import com.sta.dhbw.jambeaconrestclient.JamBeaconRestClient;
 import com.sta.dhbw.jambeaconrestclient.TrafficJam;
 import com.sta.dhbw.stauapp.settings.SettingsActivity;
+import com.sta.dhbw.stauapp.util.Utils;
 
 import java.util.List;
 
@@ -26,11 +28,18 @@ public class JamListActivity extends ListActivity implements ITrafficJamCallback
     private JamBeaconRestClient restClient = MainActivity.restClient;
     private static List<TrafficJam> trafficJams;
 
+    private ProgressDialog dialog;
+
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_jam_list);
+
+        dialog = new ProgressDialog(this);
+        dialog.setMessage("Aktualisieren...");
+        dialog.setIndeterminate(true);
+        dialog.setCanceledOnTouchOutside(false);
+        dialog.show();
 
         restClient.getTrafficJamList(this);
 
@@ -39,6 +48,14 @@ public class JamListActivity extends ListActivity implements ITrafficJamCallback
         {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
+    }
+
+    @Override
+    public void onResume()
+    {
+        super.onResume();
+        dialog.show();
+        restClient.getTrafficJamList(this);
     }
 
 
@@ -59,9 +76,11 @@ public class JamListActivity extends ListActivity implements ITrafficJamCallback
         {
             LayoutInflater inflater = (LayoutInflater) context
                     .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            View rowView = inflater.inflate(R.layout.activity_jam_list, parent, false);
-            TextView textView = (TextView) rowView.findViewById(R.id.firstLine);
-            textView.setText(trafficJamList.get(position).getId().toString());
+            View rowView = inflater.inflate(R.layout.row_layout, parent, false);
+            TextView jamIdView = (TextView) rowView.findViewById(R.id.jam_id);
+            jamIdView.setText(trafficJamList.get(position).getId().toString());
+            TextView jamTimeView = (TextView) rowView.findViewById(R.id.jam_time);
+            jamTimeView.setText(Utils.timstampToString(trafficJamList.get(position).getTimestamp()));
             return rowView;
         }
     }
@@ -84,6 +103,7 @@ public class JamListActivity extends ListActivity implements ITrafficJamCallback
                 startActivity(intent);
                 return true;
             case R.id.action_refresh_list:
+                dialog.show();
                 restClient.getTrafficJamList(this);
                 return true;
             default:
@@ -101,10 +121,15 @@ public class JamListActivity extends ListActivity implements ITrafficJamCallback
     @Override
     public void onGetJamListComplete(List<TrafficJam> trafficJamList)
     {
+        if (dialog.isShowing())
+        {
+            dialog.dismiss();
+        }
+
         trafficJams = trafficJamList;
 
-        final JamListAdapter adapter = new JamListAdapter(this, R.layout.jam_list_layout, trafficJamList);
-        getListView().setAdapter(adapter);
+        final JamListAdapter adapter = new JamListAdapter(this, R.layout.row_layout, trafficJamList);
+        setListAdapter(adapter);
 
     }
 

@@ -5,8 +5,10 @@ import android.location.LocationManager;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.sta.dhbw.jambeaconrestclient.util.Constants;
 
 import java.util.UUID;
 
@@ -18,6 +20,7 @@ public class TrafficJam implements Parcelable
 
     private final Location location;
     private final long timestamp;
+    @JsonProperty(Constants.JAM_ID)
     private final UUID id;
 
     public TrafficJam(Location location, long timestamp, UUID id)

@@ -1,9 +1,9 @@
 package com.sta.dhbw.stauserver.db;
 
 import com.sta.dhbw.stauserver.exception.StauserverException;
+import com.sta.dhbw.stauserver.resource.TrafficJamResource;
 import com.sta.dhbw.stauserver.util.Constants;
 import com.sta.dhbw.stauserver.util.Util;
-import com.sta.dhbw.stauserver.resource.TrafficJamResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
@@ -11,6 +11,7 @@ import redis.clients.jedis.JedisPubSub;
 import redis.clients.jedis.Response;
 import redis.clients.jedis.Transaction;
 
+import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
@@ -32,6 +33,7 @@ public class RedisDao implements IBeaconDb
 
     @Resource
     private static ManagedThreadFactory threadFactory;
+    private static Thread listenerThread;
 
     private static final String REDIS_RESPONSE_OK = "OK";
     private static final String REDIS_KEYEVENT_CHANNEL = "__keyevent@0__:expired";
@@ -67,13 +69,33 @@ public class RedisDao implements IBeaconDb
         //The subscribe operation blocks the thread it is called on
         //So it has to be started on a new thread and Jedis object
         Runnable listenForExpiry = new ExpiryListenerRunnable(redisHost, redisPort);
-        Thread listenerThread = threadFactory.newThread(listenForExpiry);
+        listenerThread = threadFactory.newThread(listenForExpiry);
+
         listenerThread.start();
     }
 
     public RedisDao() throws StauserverException
     {
         this("localhost", 6379);
+    }
+
+    @PreDestroy
+    public void tearDown()
+    {
+        if (listenerThread.isAlive())
+        {
+            log.info("Listener Thread still alive. Shutting down now.");
+            listenerThread.interrupt();
+            while (listenerThread.isAlive())
+            {
+                log.info("Waiting for Listener Thread to shut down...");
+                if (listenerThread.isInterrupted() || !listenerThread.isAlive())
+                {
+                    log.info("Listener Thread shut down.");
+                    break;
+                }
+            }
+        }
     }
 
     @Override
@@ -211,7 +233,7 @@ public class RedisDao implements IBeaconDb
     }
 
     @Override
-    public long createUser(String id, String hash) throws StauserverException
+    public String createUser(String id, String hash) throws StauserverException
     {
         if (null == id || id.isEmpty())
         {
@@ -225,17 +247,18 @@ public class RedisDao implements IBeaconDb
 
         if (jedis.sismember(USER_HASH_SET, hash))
         {
-            return 0L;
+            return "";
         } else
         {
             Transaction transaction = jedis.multi();
+            transaction.llen(LIST_USERS);
             transaction.sadd(USER_HASH_SET, hash);
             transaction.lpush(LIST_USERS, id);
-            List<Response<?>> responses = transaction.execGetResponse();
+            transaction.exec();
 
             log.info("Created User " + id);
 
-            return (Long) responses.get(0).get() & (Long) responses.get(1).get();
+            return hash;
         }
     }
 

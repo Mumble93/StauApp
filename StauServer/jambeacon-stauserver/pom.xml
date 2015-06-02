@@ -9,13 +9,6 @@
 
     <name>jambeacon-stauserver</name>
 
-    <repositories>
-    <repository>
-        <id>gcm-server-repository</id>
-        <url>https://raw.githubusercontent.com/slorber/gcm-server-repository/master/releases/</url>
-    </repository>
-    </repositories>
-
     <properties>
         <endorsed.dir>${project.build.directory}/endorsed</endorsed.dir>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -47,7 +40,7 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.google.android.gcm</groupId>
+            <groupId>com.ganyo</groupId>
             <artifactId>gcm-server</artifactId>
             <version>1.0.2</version>
         </dependency>

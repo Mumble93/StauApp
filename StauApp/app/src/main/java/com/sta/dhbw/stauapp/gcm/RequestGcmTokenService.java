@@ -1,9 +1,6 @@
 package com.sta.dhbw.stauapp.gcm;
 
-import android.app.AlertDialog;
 import android.app.IntentService;
-import android.app.ProgressDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
@@ -14,8 +11,8 @@ import com.google.android.gms.iid.InstanceID;
 import com.sta.dhbw.jambeaconrestclient.IUserCallback;
 import com.sta.dhbw.jambeaconrestclient.JamBeaconRestClient;
 import com.sta.dhbw.jambeaconrestclient.exception.JamBeaconException;
+import com.sta.dhbw.stauapp.MainActivity.RestIssueBroadcastReceiver;
 import com.sta.dhbw.stauapp.R;
-import com.sta.dhbw.stauapp.dialogs.RestIssueBroadcastReceiver;
 import com.sta.dhbw.stauapp.settings.PrefFields;
 
 import java.io.IOException;
@@ -24,7 +21,6 @@ public class RequestGcmTokenService extends IntentService implements IUserCallba
 {
     public static final String TAG = RequestGcmTokenService.class.getSimpleName();
     private SharedPreferences sharedPreferences;
-    private ProgressDialog progressDialog;
 
 
     public RequestGcmTokenService()
@@ -35,14 +31,6 @@ public class RequestGcmTokenService extends IntentService implements IUserCallba
     @Override
     protected void onHandleIntent(Intent intent)
     {
-
-        progressDialog = new ProgressDialog(getApplicationContext());
-        progressDialog.setIndeterminate(true);
-        progressDialog.setMessage("Registrierung am Server wird abgeschlossen...");
-        progressDialog.setCancelable(false);
-        progressDialog.setCanceledOnTouchOutside(false);
-        progressDialog.show();
-
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         //Check if a token has already been sent to the server
         //This determines whether a POST or a PUT request is issued
@@ -81,7 +69,8 @@ public class RequestGcmTokenService extends IntentService implements IUserCallba
                 restClient.updateUser(oldToken, token, existingRequestId, this);
             } catch (JamBeaconException e)
             {
-                Intent intent = new Intent().setAction(RestIssueBroadcastReceiver.REST_ISSUE)
+                Intent intent = new Intent().setAction(RestIssueBroadcastReceiver.REST_EVENT)
+                        .putExtra("success", false)
                         .putExtra("reason", e.getMessage());
                 this.sendBroadcast(intent);
             }
@@ -93,7 +82,8 @@ public class RequestGcmTokenService extends IntentService implements IUserCallba
                 restClient.registerUser(token, this);
             } catch (JamBeaconException e)
             {
-                Intent intent = new Intent().setAction(RestIssueBroadcastReceiver.REST_ISSUE)
+                Intent intent = new Intent().setAction(RestIssueBroadcastReceiver.REST_EVENT)
+                        .putExtra("success", false)
                         .putExtra("reason", e.getMessage());
                 this.sendBroadcast(intent);
             }
@@ -103,18 +93,18 @@ public class RequestGcmTokenService extends IntentService implements IUserCallba
     @Override
     public void onRegisterComplete(String xRequestId)
     {
-        if (progressDialog.isShowing())
-        {
-            progressDialog.dismiss();
-        }
-
         if (null == xRequestId || xRequestId.isEmpty())
         {
-            getAlertDialog(getString(R.string.registration_failed), getString(R.string.registration_failed_message)).show();
-
+            Intent intent = new Intent().setAction(RestIssueBroadcastReceiver.REST_EVENT)
+                    .putExtra("success", false)
+                    .putExtra("reason", getString(R.string.registration_failed));
+            this.sendBroadcast(intent);
         } else
         {
-
+            Intent intent = new Intent().setAction(RestIssueBroadcastReceiver.REST_EVENT)
+                    .putExtra("success", true)
+                    .putExtra("reason", getString(R.string.registration_success_message));
+            this.sendBroadcast(intent);
             SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.putString(PrefFields.PROPERTY_X_REQUEST_ID, xRequestId)
                     .putBoolean(PrefFields.SENT_TOKEN_TO_SERVER, true).apply();
@@ -125,53 +115,21 @@ public class RequestGcmTokenService extends IntentService implements IUserCallba
     @Override
     public void onUserUpdateComplete(String updatedXRequestId)
     {
-        if (progressDialog.isShowing())
-        {
-            progressDialog.dismiss();
-        }
-
         if (null == updatedXRequestId || updatedXRequestId.isEmpty())
         {
-            getAlertDialog(getString(R.string.update_failed), getString(R.string.registration_update_failed))
-                    .show();
+            Intent intent = new Intent().setAction(RestIssueBroadcastReceiver.REST_EVENT)
+                    .putExtra("success", false)
+                    .putExtra("reason", getString(R.string.registration_failed));
+            this.sendBroadcast(intent);
+        } else
+        {
+            Intent intent = new Intent().setAction(RestIssueBroadcastReceiver.REST_EVENT)
+                    .putExtra("success", true)
+                    .putExtra("reason", getString(R.string.registration_success_message));
+            this.sendBroadcast(intent);
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putString(PrefFields.PROPERTY_X_REQUEST_ID, updatedXRequestId).
+                    putBoolean(PrefFields.SENT_TOKEN_TO_SERVER, true).apply();
         }
-
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString(PrefFields.PROPERTY_X_REQUEST_ID, updatedXRequestId).
-                putBoolean(PrefFields.SENT_TOKEN_TO_SERVER, true).apply();
     }
-
-    private AlertDialog getAlertDialog(String title, String message)
-    {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext());
-        builder.setCancelable(true);
-        builder.setTitle(title);
-        builder.setMessage(message);
-        builder.setNegativeButton(getString(R.string.dialog_cancel), new DialogInterface.OnClickListener()
-        {
-            @Override
-            public void onClick(DialogInterface dialog, int which)
-            {
-                Intent intent = new Intent(Intent.ACTION_MAIN);
-                intent.addCategory(Intent.CATEGORY_HOME);
-                dialog.dismiss();
-                RequestGcmTokenService.this.startActivity(intent);
-            }
-        });
-        builder.setPositiveButton(getString(R.string.dialog_retry), new DialogInterface.OnClickListener()
-        {
-            @Override
-            public void onClick(DialogInterface dialog, int which)
-            {
-                Intent intent = new Intent(RequestGcmTokenService.this, RequestGcmTokenService.class);
-                RequestGcmTokenService.this.startService(intent);
-                dialog.dismiss();
-            }
-        });
-
-        AlertDialog dialog = builder.create();
-        dialog.setCanceledOnTouchOutside(false);
-        return dialog;
-    }
-
 }

@@ -1,6 +1,7 @@
 package com.sta.dhbw.stauserver.resource;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.sta.dhbw.stauserver.util.Constants;
 
 import javax.json.Json;
@@ -8,12 +9,18 @@ import javax.json.JsonObject;
 import java.io.Serializable;
 import java.util.UUID;
 
-@JsonIgnoreProperties({"owner"})
+@JsonIgnoreProperties({Constants.JAM_OWNER})
 public class TrafficJamResource implements Serializable
 {
-    private double longitude, latitude;
+    @JsonProperty(Constants.JAM_LONGITUDE)
+    private double longitude;
+    @JsonProperty(Constants.JAM_LATITUDE)
+    private double latitude;
+    @JsonProperty(Constants.JAM_TIME)
     private long timestamp;
+    @JsonProperty(Constants.JAM_ID)
     private UUID jamId;
+    @JsonProperty(Constants.JAM_OWNER)
     private String owner;
 
     public TrafficJamResource(double longitude, double latitude, long timestamp, UUID jamId, String owner)
@@ -31,7 +38,9 @@ public class TrafficJamResource implements Serializable
         this(longitude, latitude, timestamp, UUID.randomUUID(), owner);
     }
 
-    public TrafficJamResource(){}
+    public TrafficJamResource()
+    {
+    }
 
     public double getLongitude()
     {

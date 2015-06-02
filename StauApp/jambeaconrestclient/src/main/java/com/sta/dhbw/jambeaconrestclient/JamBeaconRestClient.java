@@ -12,7 +12,6 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.Serializable;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -28,7 +27,7 @@ import static com.sta.dhbw.jambeaconrestclient.util.Constants.HTTP_PUT;
 import static com.sta.dhbw.jambeaconrestclient.util.Constants.TEXT_PLAIN;
 
 
-public class JamBeaconRestClient implements Serializable
+public class JamBeaconRestClient
 {
     private static final String TAG = JamBeaconRestClient.class.getSimpleName();
 

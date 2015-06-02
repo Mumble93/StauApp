@@ -4,8 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/primary_text_default_material_dark"
-    android:theme="@android:style/Theme.NoTitleBar">
+    android:background="#ffffff">
 
     <ImageView
         android:id="@+id/imgLogo"

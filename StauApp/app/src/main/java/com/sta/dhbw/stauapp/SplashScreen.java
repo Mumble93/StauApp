@@ -16,8 +16,6 @@ public class SplashScreen extends Activity implements IHeartbeatCallback
 {
     private static final String TAG = SplashScreen.class.getSimpleName();
 
-    private JamBeaconRestClient restClient = new JamBeaconRestClient();
-
     private Intent intent;
 
     ProgressDialog progressDialog;
@@ -46,6 +44,8 @@ public class SplashScreen extends Activity implements IHeartbeatCallback
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
+
+        JamBeaconRestClient restClient = new JamBeaconRestClient();
 
         intent = new Intent(this, MainActivity.class);
 

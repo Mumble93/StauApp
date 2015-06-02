@@ -7,9 +7,7 @@ import com.sta.dhbw.stauserver.resource.TrafficJamResource;
 
 import javax.ejb.EJB;
 import javax.ws.rs.*;
-import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericEntity;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import java.util.List;

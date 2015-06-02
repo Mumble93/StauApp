@@ -21,6 +21,10 @@ public final class TrafficJamSerializer extends JsonSerializer<TrafficJam>
         Location location = jam.getLocation();
 
         gen.writeStartObject();
+        if (null != jam.getId() && !jam.getId().toString().isEmpty())
+        {
+            gen.writeStringField(Constants.JAM_ID, jam.getId().toString());
+        }
         gen.writeNumberField(Constants.JAM_LATITUDE, location.getLatitude());
         gen.writeNumberField(Constants.JAM_LONGITUDE, location.getLongitude());
         gen.writeNumberField(Constants.JAM_TIME, jam.getTimestamp());

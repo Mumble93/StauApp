@@ -35,16 +35,11 @@ public class UserRestServiceEndpoint
         Status status;
         Response response;
 
-        long result = dao.createUser(userId, userIdHash);
+        String result = dao.createUser(userId, userIdHash);
         //User was added to set
-        if (result > 0L)
+        if (null != result && !result.isEmpty())
         {
             status = Status.CREATED;
-        }
-        //User was already contained in set
-        else if (result == 0L)
-        {
-            status = Status.CONFLICT;
         }
         //Adding User failed due to other reasons
         else
@@ -55,7 +50,7 @@ public class UserRestServiceEndpoint
 
         if (status == Status.CREATED)
         {
-            response = Response.status(status).entity(userIdHash).build();
+            response = Response.status(status).entity(result).build();
         } else
         {
             response = Response.status(status).build();
