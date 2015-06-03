@@ -174,9 +174,61 @@ public class JamBeaconRestClient
     }
 
 
-    public TrafficJam postTrafficJam(TrafficJam trafficJam, String xRequestId) throws JamBeaconException
+    public void postTrafficJam(final TrafficJam trafficJam, final String xRequestId)
+            throws JamBeaconException
     {
-        return null;
+        new AsyncTask<TrafficJam, Void, TrafficJam>()
+        {
+            HttpURLConnection connection;
+
+            @Override
+            protected TrafficJam doInBackground(TrafficJam... params)
+            {
+                try
+                {
+                    connection = getConnection(HTTP_POST, JAM_ENDPOINT);
+                    connection.setDoOutput(true);
+                    connection.setDoInput(true);
+                    connection.setRequestProperty(X_REQUEST_HEADER, xRequestId);
+
+                    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
+                    writer.write(new ObjectMapper().writeValueAsString(trafficJam));
+                    writer.flush();
+                    writer.close();
+
+                    int statusCode = connection.getResponseCode();
+
+                    String response;
+
+                    if(statusCode==HttpURLConnection.HTTP_CREATED)
+                    {
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                        response = reader.readLine();
+                        reader.close();
+                        return new ObjectMapper().readValue(response, TrafficJam.class);
+                    } else {
+                        Log.e(TAG, "Error Posting Jam. Status was " + statusCode);
+                        return null;
+                    }
+                } catch (JamBeaconException e)
+                {
+                    Log.e(TAG, "Error getting connection. " + e.getMessage());
+                    return null;
+                }catch (IOException e)
+                {
+                    Log.e(TAG, "Error getting response. " + e.getMessage());
+                    return null;
+                }
+            }
+
+           /* @Override
+            protected void onPostExecute(TrafficJam result)
+            {
+                connection.disconnect();
+                caller.onTrafficJamPostComplete(result);
+            }*/
+        }.execute(trafficJam);
+
     }
 
     public void getTrafficJamList(final ITrafficJamCallback caller)

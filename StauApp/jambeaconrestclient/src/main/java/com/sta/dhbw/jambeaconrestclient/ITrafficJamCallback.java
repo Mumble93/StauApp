@@ -9,4 +9,6 @@ public interface ITrafficJamCallback
     void onGetJamListComplete(List<TrafficJam> trafficJamList);
 
     void onTrafficJamUpdateComplete(TrafficJam updatedJam);
+
+    void onTrafficJamPostComplete(TrafficJam jam);
 }

@@ -21,18 +21,21 @@ public class TrafficJam implements Parcelable
     private final Location location;
     private final long timestamp;
     @JsonProperty(Constants.JAM_ID)
-    private final UUID id;
+    private UUID id;
 
     public TrafficJam(Location location, long timestamp, UUID id)
     {
         this.location = location;
         this.timestamp = timestamp;
-        this.id = id;
+        if (null != id)
+        {
+            this.id = id;
+        }
     }
 
     public TrafficJam(Location location, long timestamp)
     {
-        this(location, timestamp, UUID.randomUUID());
+        this(location, timestamp, null);
     }
 
     public Location getLocation()

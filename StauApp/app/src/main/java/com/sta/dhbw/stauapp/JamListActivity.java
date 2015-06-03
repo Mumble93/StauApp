@@ -130,6 +130,12 @@ public class JamListActivity extends ListActivity implements ITrafficJamCallback
     }
 
     @Override
+    public void onTrafficJamPostComplete(TrafficJam jam)
+    {
+
+    }
+
+    @Override
     public void onGetJamListComplete(List<TrafficJam> trafficJamList)
     {
         if (arrayAdapter == null)

@@ -12,6 +12,8 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -28,6 +30,8 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.sta.dhbw.jambeaconrestclient.IHeartbeatCallback;
 import com.sta.dhbw.jambeaconrestclient.JamBeaconRestClient;
+import com.sta.dhbw.jambeaconrestclient.TrafficJam;
+import com.sta.dhbw.jambeaconrestclient.exception.JamBeaconException;
 import com.sta.dhbw.stauapp.dialogs.ConnectionIssueDialogFragment;
 import com.sta.dhbw.stauapp.gcm.RequestGcmTokenService;
 import com.sta.dhbw.stauapp.services.BeaconService;
@@ -35,6 +39,8 @@ import com.sta.dhbw.stauapp.settings.PrefFields;
 import com.sta.dhbw.stauapp.settings.SettingsActivity;
 import com.sta.dhbw.stauapp.util.Utils;
 import com.sta.dhbw.stauapp.util.Utils.ConnectionIssue;
+
+import java.util.Date;
 
 
 public class MainActivity extends Activity implements IHeartbeatCallback
@@ -49,7 +55,7 @@ public class MainActivity extends Activity implements IHeartbeatCallback
 
 
     TextView mDisplay, requestIdDisplay, appVersionDisplay;
-    Button jamListButton, beaconButton, mapButton;
+    Button jamListButton, beaconButton, sendJamButton;
     GoogleCloudMessaging gcm;
 
     boolean beaconStarted = false;
@@ -77,8 +83,30 @@ public class MainActivity extends Activity implements IHeartbeatCallback
 
         jamListButton = (Button) findViewById(R.id.view_traffic_issues);
         beaconButton = (Button) findViewById(R.id.start_beacon);
+        sendJamButton = (Button) findViewById(R.id.send_test_jam);
 
         context = getApplicationContext();
+
+        sendJamButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                Location location = new Location(LocationManager.GPS_PROVIDER);
+                //Karlsbad - Pforzheim
+                location.setLatitude(48.912311);
+                location.setLongitude(8.621221);
+                TrafficJam jam = new TrafficJam(location, new Date().getTime());
+                String requestId = getSharedPreferences().getString(PrefFields.PROPERTY_X_REQUEST_ID, "");
+                try
+                {
+                    restClient.postTrafficJam(jam, requestId);
+                } catch (JamBeaconException e)
+                {
+                    Log.e(TAG, e.getMessage());
+                }
+            }
+        });
 
         jamListButton.setOnClickListener(new View.OnClickListener()
         {

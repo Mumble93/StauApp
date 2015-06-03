@@ -23,6 +23,7 @@ public class JamMapActivity extends Activity
     private GoogleMap googleMap;
     private LatLng currentZoomedLocation;
     private List<TrafficJam> trafficJamList;
+
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
