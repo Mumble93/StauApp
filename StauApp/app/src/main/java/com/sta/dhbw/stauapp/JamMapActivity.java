@@ -13,51 +13,50 @@ import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.sta.dhbw.jambeaconrestclient.TrafficJam;
+
+import java.util.List;
 
 public class JamMapActivity extends Activity
 {
     private static final String TAG = JamMapActivity.class.getSimpleName();
     private GoogleMap googleMap;
-
+    private LatLng currentZoomedLocation;
+    private List<TrafficJam> trafficJamList;
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.jam_map_layout);
         Intent intent = getIntent();
-        LatLng latLng = null;
 
         if (intent != null)
         {
-            Log.d(TAG, "Got intent with parcel");
-            latLng = intent.getParcelableExtra("location");
+            Log.d(TAG, "Got intent");
+            currentZoomedLocation = intent.getParcelableExtra("location");
         }
 
-        initMap();
+        initMap(currentZoomedLocation);
+    }
 
-        if (null != latLng)
-        {
-            // create marker
-            MarkerOptions marker = new MarkerOptions().position(latLng);
-
-            // adding marker
-            googleMap.addMarker(marker);
-
-            CameraPosition cameraPosition = new CameraPosition.Builder().target(latLng).zoom(15).build();
-            googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-
-        }
-
+    @Override
+    public void onStart()
+    {
+        super.onStart();
+        trafficJamList = JamListActivity.transportList;
+        setMarkers();
     }
 
     @Override
     public void onResume()
     {
         super.onResume();
-        initMap();
+        trafficJamList = JamListActivity.transportList;
+        initMap(currentZoomedLocation);
+        setMarkers();
     }
 
-    private void initMap()
+    private void initMap(LatLng zoomedLocation)
     {
         if (null == googleMap)
         {
@@ -69,5 +68,32 @@ public class JamMapActivity extends Activity
                 Toast.makeText(this, "Could not get Map", Toast.LENGTH_SHORT).show();
             }
         }
+        if (null != zoomedLocation)
+        {
+            CameraPosition cameraPosition = new CameraPosition.Builder().target(zoomedLocation).zoom(10).build();
+            googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+
+        }
+    }
+
+    private void setMarkers()
+    {
+        if (trafficJamList != null && !trafficJamList.isEmpty())
+        {
+
+            for (TrafficJam jam : trafficJamList)
+            {
+                double latitude = jam.getLocation().getLatitude();
+                double longitude = jam.getLocation().getLongitude();
+                setMarker(new LatLng(latitude, longitude));
+            }
+        }
+    }
+
+    private void setMarker(LatLng location)
+    {
+        MarkerOptions marker = new MarkerOptions().position(location);
+        googleMap.addMarker(marker);
     }
 }
+

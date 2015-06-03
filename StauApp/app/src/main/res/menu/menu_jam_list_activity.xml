@@ -1,17 +1,26 @@
-<menu xmlns:tools="http://schemas.android.com/tools"
-      xmlns:android="http://schemas.android.com/apk/res/android">
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/action_settings"
-        android:title="@string/action_settings"
         android:icon="@mipmap/ic_action_settings"
         android:orderInCategory="200"
+        android:showAsAction="collapseActionView"
+        android:title="@string/action_settings"
+        />
+
+    <item
+        android:id="@+id/start_jam_map"
+        android:icon="@android:drawable/ic_dialog_map"
+        android:orderInCategory="300"
         android:showAsAction="ifRoom"
-        tools:ignore="AppCompatResource"/>
+        android:title="@string/show_jam_map"
+        />
+
     <item
         android:id="@+id/action_refresh_list"
-        android:title="@string/refresh_list"
         android:icon="@mipmap/ic_action_refresh"
         android:orderInCategory="100"
         android:showAsAction="ifRoom"
-        tools:ignore="AppCompatResource"/>
+        android:title="@string/refresh_list"
+        />
 </menu>

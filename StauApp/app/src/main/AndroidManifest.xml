@@ -64,7 +64,7 @@
             android:name=".JamMapActivity"
             android:icon="@mipmap/dh_launcher"
             android:label="Staukarte"
-            android:parentActivityName=".MainActivity"/>
+            android:parentActivityName=".JamListActivity"/>
 
         <receiver
             android:name="com.google.android.gms.gcm.GcmReceiver"

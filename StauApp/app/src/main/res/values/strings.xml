@@ -27,4 +27,5 @@
     <string name="registration_failed_message">Die Registrierung am Server ist leider fehlgeschlagen. Möchten Sie es erneut probieren?</string>
     <string name="refresh_list">Liste aktualisieren</string>
     <string name="registration_success_message">Registrierung erfolgreich</string>
+    <string name="show_jam_map">Staukarte anzeigen</string>
 </resources>

@@ -5,6 +5,7 @@ import android.app.DialogFragment;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.sta.dhbw.jambeaconrestclient.IHeartbeatCallback;
 import com.sta.dhbw.jambeaconrestclient.JamBeaconRestClient;
@@ -30,10 +31,12 @@ public class SplashScreen extends Activity implements IHeartbeatCallback
 
         if (success)
         {
+            Log.d(TAG, "Starting Main Activity");
             startActivity(intent);
             finish();
         } else
         {
+            Log.e(TAG, "Server Check failed on Splash Screen");
             DialogFragment fragment = ConnectionIssueDialogFragment.newInstance(ConnectionIssue.SERVER_NOT_AVAILABLE);
             fragment.show(getFragmentManager(), "dialog");
         }
@@ -45,9 +48,28 @@ public class SplashScreen extends Activity implements IHeartbeatCallback
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
 
-        JamBeaconRestClient restClient = new JamBeaconRestClient();
-
         intent = new Intent(this, MainActivity.class);
+
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setCancelable(false);
+        progressDialog.setCanceledOnTouchOutside(false);
+        progressDialog.setIndeterminate(true);
+
+        if (android.os.Debug.isDebuggerConnected())
+        {
+            progressDialog.setMessage("Welcome, developer...");
+        } else
+        {
+            progressDialog.setMessage("Some work is done here...");
+        }
+    }
+
+    @Override
+    protected void onStart()
+    {
+        super.onStart();
+        progressDialog.show();
+        JamBeaconRestClient restClient = new JamBeaconRestClient();
 
         //Check GPS availability
         if (Utils.checkGps(this))
@@ -68,24 +90,5 @@ public class SplashScreen extends Activity implements IHeartbeatCallback
             DialogFragment fragment = ConnectionIssueDialogFragment.newInstance(ConnectionIssue.GPS_NOT_AVAILABLE);
             fragment.show(getFragmentManager(), "dialog");
         }
-
-    }
-
-    @Override
-    protected void onStart()
-    {
-        super.onStart();
-        progressDialog = new ProgressDialog(this);
-        progressDialog.setCancelable(false);
-        progressDialog.setCanceledOnTouchOutside(false);
-        progressDialog.setIndeterminate(true);
-        if (android.os.Debug.isDebuggerConnected())
-        {
-            progressDialog.setMessage("Welcome, developer...");
-        } else
-        {
-            progressDialog.setMessage("Some work is done here...");
-        }
-        progressDialog.show();
     }
 }

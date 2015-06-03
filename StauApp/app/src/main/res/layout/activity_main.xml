@@ -26,12 +26,6 @@
         android:orientation="vertical">
 
         <Button
-            android:id="@+id/show_map_button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Karte anzeigen"/>
-
-        <Button
             android:id="@+id/view_traffic_issues"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

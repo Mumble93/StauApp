@@ -44,7 +44,6 @@ public class MainActivity extends Activity implements IHeartbeatCallback
     private static final String TAG = MainActivity.class.getSimpleName();
 
     public static JamBeaconRestClient restClient;
-    ProgressDialog registrationProgressDialog;
     RestIssueBroadcastReceiver restIssueBroadcastReceiver = null;
     boolean receiverIsRegistered = false;
 
@@ -78,20 +77,8 @@ public class MainActivity extends Activity implements IHeartbeatCallback
 
         jamListButton = (Button) findViewById(R.id.view_traffic_issues);
         beaconButton = (Button) findViewById(R.id.start_beacon);
-        mapButton = (Button) findViewById(R.id.show_map_button);
 
         context = getApplicationContext();
-
-
-        mapButton.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                Intent intent = new Intent(v.getContext(), JamMapActivity.class);
-                startActivity(intent);
-            }
-        });
 
         jamListButton.setOnClickListener(new View.OnClickListener()
         {
