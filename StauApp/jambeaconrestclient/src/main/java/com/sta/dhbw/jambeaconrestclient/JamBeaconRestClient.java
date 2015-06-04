@@ -174,7 +174,7 @@ public class JamBeaconRestClient
     }
 
 
-    public void postTrafficJam(final TrafficJam trafficJam, final String xRequestId)
+    public void postTrafficJam(final TrafficJam trafficJam, final String xRequestId, final ITrafficJamCallback caller)
             throws JamBeaconException
     {
         new AsyncTask<TrafficJam, Void, TrafficJam>()
@@ -221,12 +221,12 @@ public class JamBeaconRestClient
                 }
             }
 
-           /* @Override
+           @Override
             protected void onPostExecute(TrafficJam result)
             {
                 connection.disconnect();
                 caller.onTrafficJamPostComplete(result);
-            }*/
+            }
         }.execute(trafficJam);
 
     }

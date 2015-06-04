@@ -28,7 +28,7 @@ public class GcmClient
 {
     private static final Logger log = LoggerFactory.getLogger(GcmClient.class);
 
-    private static final String API_KEY = "AIzaSyBxYprfcDs3b3x34pDW8HFDaljnTB-rEQ4";
+    private static final String API_KEY = "AIzaSyD9zwvulCjrJwofmO3ZpLsBbqOyC8Q12Vc";
     //private static final String TARGET = "https://android.googleapis.com/gcm/send";
 
     private static final int TTL_VALUE = 600; //Messages will be stored for 10 minutes

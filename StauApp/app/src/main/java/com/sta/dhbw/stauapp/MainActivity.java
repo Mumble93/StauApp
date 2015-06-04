@@ -55,7 +55,7 @@ public class MainActivity extends Activity implements IHeartbeatCallback
 
 
     TextView mDisplay, requestIdDisplay, appVersionDisplay;
-    Button jamListButton, beaconButton, sendJamButton;
+    Button jamListButton, beaconButton;
     GoogleCloudMessaging gcm;
 
     boolean beaconStarted = false;
@@ -83,30 +83,8 @@ public class MainActivity extends Activity implements IHeartbeatCallback
 
         jamListButton = (Button) findViewById(R.id.view_traffic_issues);
         beaconButton = (Button) findViewById(R.id.start_beacon);
-        sendJamButton = (Button) findViewById(R.id.send_test_jam);
 
         context = getApplicationContext();
-
-        sendJamButton.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                Location location = new Location(LocationManager.GPS_PROVIDER);
-                //Karlsbad - Pforzheim
-                location.setLatitude(48.912311);
-                location.setLongitude(8.621221);
-                TrafficJam jam = new TrafficJam(location, new Date().getTime());
-                String requestId = getSharedPreferences().getString(PrefFields.PROPERTY_X_REQUEST_ID, "");
-                try
-                {
-                    restClient.postTrafficJam(jam, requestId);
-                } catch (JamBeaconException e)
-                {
-                    Log.e(TAG, e.getMessage());
-                }
-            }
-        });
 
         jamListButton.setOnClickListener(new View.OnClickListener()
         {

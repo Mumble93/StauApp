@@ -4,7 +4,6 @@ import android.location.Location;
 import android.location.LocationManager;
 
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -18,7 +17,7 @@ public final class TrafficJamDeserializer extends JsonDeserializer<TrafficJam>
     private static final String TAG = TrafficJamDeserializer.class.getSimpleName();
 
     @Override
-    public TrafficJam deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException
+    public TrafficJam deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException
     {
         Location location = new Location(LocationManager.GPS_PROVIDER);
 
