@@ -5,6 +5,8 @@ import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.location.Address;
+import android.location.Geocoder;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -25,8 +27,9 @@ import com.sta.dhbw.jambeaconrestclient.TrafficJam;
 import com.sta.dhbw.stauapp.settings.SettingsActivity;
 import com.sta.dhbw.stauapp.util.Utils;
 
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 
 public class JamListActivity extends ListActivity implements ITrafficJamCallback
 {
@@ -40,7 +43,8 @@ public class JamListActivity extends ListActivity implements ITrafficJamCallback
 
     private ProgressDialog dialog;
 
-    private static class RowViewHolder{
+    private static class RowViewHolder
+    {
         TextView jamIdText;
         TextView jamTimeText;
     }
@@ -78,13 +82,13 @@ public class JamListActivity extends ListActivity implements ITrafficJamCallback
         }
     }
 
-    @Override
+    /*@Override
     public void onStart()
     {
         super.onStart();
         dialog.show();
         restClient.getTrafficJamList(this);
-    }
+    }*/
 
     @Override
     public void onResume()
@@ -185,7 +189,9 @@ public class JamListActivity extends ListActivity implements ITrafficJamCallback
         {
             RowViewHolder rowViewHolder;
 
-            if(convertView == null)
+            TrafficJam currentJam = trafficJamList.get(position);
+
+            if (convertView == null)
             {
                 LayoutInflater inflater = (LayoutInflater) context
                         .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -201,8 +207,41 @@ public class JamListActivity extends ListActivity implements ITrafficJamCallback
                 rowViewHolder = (RowViewHolder) convertView.getTag();
             }
 
-            rowViewHolder.jamIdText.setText(trafficJamList.get(position).getId().toString());
-            rowViewHolder.jamTimeText.setText(Utils.timstampToString(trafficJamList.get(position).getTimestamp()));
+            Geocoder geocoder = new Geocoder(getContext(), Locale.getDefault());
+            String locality = null;
+            String adminArea = null;
+
+            try
+            {
+                List<Address> addresses = geocoder.getFromLocation(currentJam.getLocation().getLatitude(), currentJam.getLocation().getLongitude(), 1);
+                if (addresses != null && addresses.size() > 0)
+                {
+                    Address address = addresses.get(0);
+                    locality = address.getLocality();
+                    adminArea = address.getAdminArea();
+                }
+            } catch (IOException e)
+            {
+                Log.e(TAG, "Error reverse geocoding location. " + e.getMessage());
+            }
+
+            String itemText = "";
+
+            if (adminArea != null && !adminArea.isEmpty())
+            {
+                itemText = adminArea;
+            }
+            if (locality != null && !locality.isEmpty())
+            {
+                itemText += ", " + locality;
+            }
+            if (itemText.isEmpty())
+            {
+                itemText = "Beschreibung nicht verfügbar";
+            }
+
+            rowViewHolder.jamIdText.setText(itemText);
+            rowViewHolder.jamTimeText.setText(Utils.timstampToString(currentJam.getTimestamp()));
             return convertView;
         }
     }

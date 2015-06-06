@@ -1,6 +1,7 @@
 package com.sta.dhbw.jambeaconrestclient;
 
 import android.os.AsyncTask;
+import android.os.Build;
 import android.util.Log;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -41,6 +42,10 @@ public class JamBeaconRestClient
         {
             Log.d(TAG, "Starting in DEBUG Mode.");
             SERVER_ENDPOINT = "http://localhost:8080/rest/api/v1/";
+        } else if (Build.FINGERPRINT.startsWith("generic"))
+        {
+            Log.d(TAG, "Starting in EMULATED Mode.");
+            SERVER_ENDPOINT = "http://10.0.2.2:8080/rest/api/v1/";
         } else
         {
             SERVER_ENDPOINT = "http://www.dhbw-jambeacon.org/rest/api/v1/";
@@ -53,7 +58,7 @@ public class JamBeaconRestClient
     }
 
 
-    public void registerUser(String userId, final IUserCallback caller) throws JamBeaconException
+    public void registerUser(String userId, final IUserCallback caller)
     {
         Log.d(TAG, "REGISTERING USER");
         new AsyncTask<String, Void, String>()
@@ -112,7 +117,7 @@ public class JamBeaconRestClient
 
     }
 
-    public void updateUser(String oldId, String updatedId, final String xRequestHeader, final IUserCallback caller) throws JamBeaconException
+    public void updateUser(String oldId, String updatedId, final String xRequestHeader, final IUserCallback caller)
     {
         Log.d(TAG, "UPDATING USER");
         new AsyncTask<String, Void, String>()
@@ -168,14 +173,42 @@ public class JamBeaconRestClient
 
     }
 
-    public void unregisterUser(String userId) throws JamBeaconException
+    public void unregisterUser(final String userId, final IUserCallback caller)
     {
+        new AsyncTask<Void, Void, Integer>()
+        {
+            HttpURLConnection connection;
+
+            @Override
+            protected Integer doInBackground(Void... params)
+            {
+                try
+                {
+                    connection = getConnection(HTTP_DELETE, UNREGISTER_ENDPOINT + userId);
+                    return connection.getResponseCode();
+                } catch (JamBeaconException e)
+                {
+                    Log.e(TAG, "Error getting connection for delete. " + e.getMessage());
+                    return -1;
+                } catch (IOException e)
+                {
+                    Log.e(TAG, "Error getting response code after deletion. " + e.getMessage());
+                    return -1;
+                }
+            }
+
+            @Override
+            protected void onPostExecute(Integer result)
+            {
+                connection.disconnect();
+            }
+        }.execute();
+
 
     }
 
 
     public void postTrafficJam(final TrafficJam trafficJam, final String xRequestId, final ITrafficJamCallback caller)
-            throws JamBeaconException
     {
         new AsyncTask<TrafficJam, Void, TrafficJam>()
         {
@@ -200,13 +233,14 @@ public class JamBeaconRestClient
 
                     String response;
 
-                    if(statusCode==HttpURLConnection.HTTP_CREATED)
+                    if (statusCode == HttpURLConnection.HTTP_CREATED)
                     {
                         BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                         response = reader.readLine();
                         reader.close();
                         return new ObjectMapper().readValue(response, TrafficJam.class);
-                    } else {
+                    } else
+                    {
                         Log.e(TAG, "Error Posting Jam. Status was " + statusCode);
                         return null;
                     }
@@ -214,14 +248,14 @@ public class JamBeaconRestClient
                 {
                     Log.e(TAG, "Error getting connection. " + e.getMessage());
                     return null;
-                }catch (IOException e)
+                } catch (IOException e)
                 {
                     Log.e(TAG, "Error getting response. " + e.getMessage());
                     return null;
                 }
             }
 
-           @Override
+            @Override
             protected void onPostExecute(TrafficJam result)
             {
                 connection.disconnect();
@@ -286,12 +320,12 @@ public class JamBeaconRestClient
         }.execute();
     }
 
-    public TrafficJam getTrafficJam(UUID id) throws JamBeaconException
+    public TrafficJam getTrafficJam(UUID id)
     {
         return null;
     }
 
-    public void updateTrafficJam(TrafficJam trafficJam, String xRequestId) throws JamBeaconException
+    public void updateTrafficJam(TrafficJam trafficJam, String xRequestId)
     {
 
     }

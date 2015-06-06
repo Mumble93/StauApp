@@ -10,7 +10,6 @@ import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.google.android.gms.iid.InstanceID;
 import com.sta.dhbw.jambeaconrestclient.IUserCallback;
 import com.sta.dhbw.jambeaconrestclient.JamBeaconRestClient;
-import com.sta.dhbw.jambeaconrestclient.exception.JamBeaconException;
 import com.sta.dhbw.stauapp.MainActivity.RestIssueBroadcastReceiver;
 import com.sta.dhbw.stauapp.R;
 import com.sta.dhbw.stauapp.settings.PrefFields;
@@ -63,30 +62,12 @@ public class RequestGcmTokenService extends IntentService implements IUserCallba
         {
             String oldToken = sharedPreferences.getString(PrefFields.PROPERTY_REG_ID, "");
             String existingRequestId = sharedPreferences.getString(PrefFields.PROPERTY_X_REQUEST_ID, "");
-            try
-            {
-                Log.d(TAG, "Updating registered user.");
-                restClient.updateUser(oldToken, token, existingRequestId, this);
-            } catch (JamBeaconException e)
-            {
-                Intent intent = new Intent().setAction(RestIssueBroadcastReceiver.REST_EVENT)
-                        .putExtra("success", false)
-                        .putExtra("reason", e.getMessage());
-                this.sendBroadcast(intent);
-            }
+            Log.d(TAG, "Updating registered user.");
+            restClient.updateUser(oldToken, token, existingRequestId, this);
         } else
         {
-            try
-            {
-                Log.d(TAG, "Registering new User");
-                restClient.registerUser(token, this);
-            } catch (JamBeaconException e)
-            {
-                Intent intent = new Intent().setAction(RestIssueBroadcastReceiver.REST_EVENT)
-                        .putExtra("success", false)
-                        .putExtra("reason", e.getMessage());
-                this.sendBroadcast(intent);
-            }
+            Log.d(TAG, "Registering new User");
+            restClient.registerUser(token, this);
         }
     }
 
@@ -131,5 +112,11 @@ public class RequestGcmTokenService extends IntentService implements IUserCallba
             editor.putString(PrefFields.PROPERTY_X_REQUEST_ID, updatedXRequestId).
                     putBoolean(PrefFields.SENT_TOKEN_TO_SERVER, true).apply();
         }
+    }
+
+    @Override
+    public void onUserUnregister(Integer resultCode)
+    {
+
     }
 }

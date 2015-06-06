@@ -28,4 +28,6 @@
     <string name="refresh_list">Liste aktualisieren</string>
     <string name="registration_success_message">Registrierung erfolgreich</string>
     <string name="show_jam_map">Staukarte anzeigen</string>
+    <string name="jambeacon_activated">JamBeacon aktiviert</string>
+    <string name="jam_detection_running">Die Stauerfassung läuft</string>
 </resources>

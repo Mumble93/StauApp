@@ -9,7 +9,6 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -22,7 +21,6 @@ import com.sta.dhbw.jambeaconrestclient.ITrafficJamCallback;
 import com.sta.dhbw.jambeaconrestclient.IUserCallback;
 import com.sta.dhbw.jambeaconrestclient.JamBeaconRestClient;
 import com.sta.dhbw.jambeaconrestclient.TrafficJam;
-import com.sta.dhbw.jambeaconrestclient.exception.JamBeaconException;
 import com.sta.dhbw.stauapp.settings.PrefFields;
 import com.sta.dhbw.stauapp.settings.SettingsActivity;
 
@@ -66,13 +64,7 @@ public class DeveloperActivity extends Activity implements IHeartbeatCallback, I
                 location.setLongitude(8.621221);
                 TrafficJam jam = new TrafficJam(location, new Date().getTime());
                 String requestId = sharedPreferences.getString(PrefFields.PROPERTY_X_REQUEST_ID, "");
-                try
-                {
-                    restClient.postTrafficJam(jam, requestId, DeveloperActivity.this);
-                } catch (JamBeaconException e)
-                {
-                    Log.e(TAG, e.getMessage());
-                }
+                restClient.postTrafficJam(jam, requestId, DeveloperActivity.this);
             }
         });
 
@@ -88,13 +80,9 @@ public class DeveloperActivity extends Activity implements IHeartbeatCallback, I
                     Toast.makeText(v.getContext(), "No GCM Registration Id found", Toast.LENGTH_SHORT).show();
                 } else
                 {
-                    try
-                    {
-                        restClient.registerUser(gcmRegId, DeveloperActivity.this);
-                    } catch (JamBeaconException e)
-                    {
-                        Toast.makeText(v.getContext(), e.getMessage(), Toast.LENGTH_LONG).show();
-                    }
+
+                    restClient.registerUser(gcmRegId, DeveloperActivity.this);
+
                 }
             }
         });
@@ -196,6 +184,12 @@ public class DeveloperActivity extends Activity implements IHeartbeatCallback, I
 
     @Override
     public void onUserUpdateComplete(String updatedXRequestId)
+    {
+
+    }
+
+    @Override
+    public void onUserUnregister(Integer resultCode)
     {
 
     }

@@ -43,7 +43,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true">
-        <TextView
+
+    <TextView
             android:id="@+id/app_version_display"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"/>

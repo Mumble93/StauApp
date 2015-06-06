@@ -3,7 +3,9 @@ package com.sta.dhbw.stauapp;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DialogFragment;
-import android.app.ProgressDialog;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -12,8 +14,6 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.location.Location;
-import android.location.LocationManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -30,8 +30,6 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.sta.dhbw.jambeaconrestclient.IHeartbeatCallback;
 import com.sta.dhbw.jambeaconrestclient.JamBeaconRestClient;
-import com.sta.dhbw.jambeaconrestclient.TrafficJam;
-import com.sta.dhbw.jambeaconrestclient.exception.JamBeaconException;
 import com.sta.dhbw.stauapp.dialogs.ConnectionIssueDialogFragment;
 import com.sta.dhbw.stauapp.gcm.RequestGcmTokenService;
 import com.sta.dhbw.stauapp.services.BeaconService;
@@ -40,12 +38,11 @@ import com.sta.dhbw.stauapp.settings.SettingsActivity;
 import com.sta.dhbw.stauapp.util.Utils;
 import com.sta.dhbw.stauapp.util.Utils.ConnectionIssue;
 
-import java.util.Date;
-
 
 public class MainActivity extends Activity implements IHeartbeatCallback
 {
     private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
+    private static final int BEACON_NOTIFICATION = 1337;
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
@@ -57,8 +54,9 @@ public class MainActivity extends Activity implements IHeartbeatCallback
     TextView mDisplay, requestIdDisplay, appVersionDisplay;
     Button jamListButton, beaconButton;
     GoogleCloudMessaging gcm;
+    NotificationManager notificationManager;
 
-    boolean beaconStarted = false;
+    static boolean beaconStarted = false;
 
     Context context;
 
@@ -70,12 +68,18 @@ public class MainActivity extends Activity implements IHeartbeatCallback
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        restIssueBroadcastReceiver = new RestIssueBroadcastReceiver();
-        registerReceiver(restIssueBroadcastReceiver, new IntentFilter(RestIssueBroadcastReceiver.REST_EVENT));
-        receiverIsRegistered = true;
+        if (!receiverIsRegistered)
+        {
+            restIssueBroadcastReceiver = new RestIssueBroadcastReceiver();
+            registerReceiver(restIssueBroadcastReceiver, new IntentFilter(RestIssueBroadcastReceiver.REST_EVENT));
+            receiverIsRegistered = true;
+        }
+
         Log.d(TAG, "Registered RestIssueBroadcastReceiver");
 
         restClient = new JamBeaconRestClient();
+
+        notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
         mDisplay = (TextView) findViewById(R.id.token_display);
         requestIdDisplay = (TextView) findViewById(R.id.request_id_display);
@@ -83,6 +87,13 @@ public class MainActivity extends Activity implements IHeartbeatCallback
 
         jamListButton = (Button) findViewById(R.id.view_traffic_issues);
         beaconButton = (Button) findViewById(R.id.start_beacon);
+        if (beaconStarted)
+        {
+            beaconButton.setText(getString(R.string.stop_beacon_btn));
+        } else
+        {
+            beaconButton.setText(getString(R.string.start_beacon_btn));
+        }
 
         context = getApplicationContext();
 
@@ -171,6 +182,18 @@ public class MainActivity extends Activity implements IHeartbeatCallback
     public void onPause()
     {
         super.onPause();
+        if (receiverIsRegistered)
+        {
+            unregisterReceiver(restIssueBroadcastReceiver);
+            receiverIsRegistered = false;
+            Log.d(TAG, "Unregistered RestIssueBroadcastReceiver");
+        }
+    }
+
+    @Override
+    public void onStop()
+    {
+        super.onStop();
         if (receiverIsRegistered)
         {
             unregisterReceiver(restIssueBroadcastReceiver);
@@ -296,20 +319,38 @@ public class MainActivity extends Activity implements IHeartbeatCallback
     private void startBeacon()
     {
         Toast.makeText(this, "Beacon aktiviert", Toast.LENGTH_SHORT).show();
-        //ToDo: Display additional notification with icon
-        Intent beaconServiceIntent = new Intent(this, BeaconService.class);
+        Intent beaconServiceIntent = new Intent(context, BeaconService.class);
         beaconServiceIntent.putExtra(PrefFields.MIN_DISTANCE_FOR_ALERT, 2.25);
         startService(beaconServiceIntent);
         beaconButton.setText(R.string.stop_beacon_btn);
         beaconStarted = true;
+        showBeaconNotification();
     }
 
     private void stopBeacon()
     {
         Toast.makeText(this, "Beacon deaktiviert", Toast.LENGTH_SHORT).show();
-        stopService(new Intent(this, BeaconService.class));
+        stopService(new Intent(context, BeaconService.class));
         beaconButton.setText(R.string.start_beacon_btn);
         beaconStarted = false;
+        dismissBeaconNotification();
+    }
+
+    private void showBeaconNotification()
+    {
+        Notification.Builder builder = new Notification.Builder(this)
+                .setSmallIcon(R.mipmap.dh_notification)
+                .setContentTitle(getString(R.string.jambeacon_activated))
+                .setContentText(getString(R.string.jam_detection_running))
+                .setContentIntent(PendingIntent.getActivity(this, 0,
+                        new Intent(this, MainActivity.class), 0))
+                .setVibrate(new long[]{0, 1000});
+        notificationManager.notify(BEACON_NOTIFICATION, builder.build());
+    }
+
+    private void dismissBeaconNotification()
+    {
+        notificationManager.cancel(BEACON_NOTIFICATION);
     }
 
     public class RestIssueBroadcastReceiver extends BroadcastReceiver
