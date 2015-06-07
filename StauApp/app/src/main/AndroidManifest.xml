@@ -39,6 +39,10 @@
             android:icon="@mipmap/dh_launcher"
             android:label="@string/app_name">
         </activity>
+        <activity android:name=".DeveloperActivity"
+                  android:icon="@mipmap/dh_launcher"
+                  android:label="@string/developer_mode"
+                  android:parentActivityName=".MainActivity"/>
         <activity
             android:name=".SplashScreen"
             android:label="@string/app_name"

@@ -50,9 +50,11 @@ public class MainActivity extends Activity implements IHeartbeatCallback
     RestIssueBroadcastReceiver restIssueBroadcastReceiver = null;
     boolean receiverIsRegistered = false;
 
+    private static BeaconBroadcastReceiver beaconBroadcastReceiver = null;
 
-    TextView mDisplay, requestIdDisplay, appVersionDisplay;
-    Button jamListButton, beaconButton;
+
+
+    Button jamListButton, beaconButton, devloperButton;
     GoogleCloudMessaging gcm;
     NotificationManager notificationManager;
 
@@ -75,18 +77,25 @@ public class MainActivity extends Activity implements IHeartbeatCallback
             receiverIsRegistered = true;
         }
 
+        if(beaconBroadcastReceiver == null)
+        {
+            beaconBroadcastReceiver = new BeaconBroadcastReceiver();
+        }
+
+
+
         Log.d(TAG, "Registered RestIssueBroadcastReceiver");
 
         restClient = new JamBeaconRestClient();
 
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
-        mDisplay = (TextView) findViewById(R.id.token_display);
-        requestIdDisplay = (TextView) findViewById(R.id.request_id_display);
-        appVersionDisplay = (TextView) findViewById(R.id.app_version_display);
+
 
         jamListButton = (Button) findViewById(R.id.view_traffic_issues);
         beaconButton = (Button) findViewById(R.id.start_beacon);
+        devloperButton = (Button) findViewById(R.id.start_developer_activity);
+
         if (beaconStarted)
         {
             beaconButton.setText(getString(R.string.stop_beacon_btn));
@@ -96,6 +105,15 @@ public class MainActivity extends Activity implements IHeartbeatCallback
         }
 
         context = getApplicationContext();
+
+        devloperButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                startActivity(new Intent(v.getContext(), DeveloperActivity.class));
+            }
+        });
 
         jamListButton.setOnClickListener(new View.OnClickListener()
         {
@@ -132,17 +150,13 @@ public class MainActivity extends Activity implements IHeartbeatCallback
             {
                 Log.i(TAG, "Registering for GCM Services");
                 registerInBackground();
-            } else
-            {
-                SharedPreferences sharedPreferences = getSharedPreferences();
-                mDisplay.setText("Token: " + sharedPreferences.getString(PrefFields.PROPERTY_REG_ID, ""));
-                requestIdDisplay.setText("Request Id: " + sharedPreferences.getString(PrefFields.PROPERTY_X_REQUEST_ID, ""));
-                appVersionDisplay.setText("AppVersion: " + sharedPreferences.getInt(PrefFields.PROPERTY_APP_VERSION, 0));
             }
         } else
         {
             Log.i(TAG, "No valid Google Play Services APK found.");
         }
+
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 
     }
 
@@ -318,19 +332,21 @@ public class MainActivity extends Activity implements IHeartbeatCallback
 
     private void startBeacon()
     {
-        Toast.makeText(this, "Beacon aktiviert", Toast.LENGTH_SHORT).show();
+        SharedPreferences sharedPreferences = getSharedPreferences();
+        int delay = Integer.parseInt(sharedPreferences.getString("beacon_delay", "3"));
+        Toast.makeText(this, "Beacon aktiviert. Messung startet in " + delay + " Minuten", Toast.LENGTH_LONG).show();
         Intent beaconServiceIntent = new Intent(context, BeaconService.class);
-        beaconServiceIntent.putExtra(PrefFields.MIN_DISTANCE_FOR_ALERT, 2.25);
+        registerReceiver(beaconBroadcastReceiver, new IntentFilter(BeaconBroadcastReceiver.BEACON_STARTET));
         startService(beaconServiceIntent);
         beaconButton.setText(R.string.stop_beacon_btn);
         beaconStarted = true;
-        showBeaconNotification();
     }
 
     private void stopBeacon()
     {
         Toast.makeText(this, "Beacon deaktiviert", Toast.LENGTH_SHORT).show();
         stopService(new Intent(context, BeaconService.class));
+        unregisterReceiver(beaconBroadcastReceiver);
         beaconButton.setText(R.string.start_beacon_btn);
         beaconStarted = false;
         dismissBeaconNotification();
@@ -351,6 +367,18 @@ public class MainActivity extends Activity implements IHeartbeatCallback
     private void dismissBeaconNotification()
     {
         notificationManager.cancel(BEACON_NOTIFICATION);
+    }
+
+    public class BeaconBroadcastReceiver extends BroadcastReceiver
+    {
+        public static final String BEACON_STARTET = "com.sta.dhbw.stauapp.BEACON_STARTET";
+        private final String TAG = BeaconBroadcastReceiver.class.getSimpleName();
+
+        @Override
+        public void onReceive(Context context, Intent intent)
+        {
+            showBeaconNotification();
+        }
     }
 
     public class RestIssueBroadcastReceiver extends BroadcastReceiver

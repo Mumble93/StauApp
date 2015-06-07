@@ -10,20 +10,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
-import javax.ejb.DependsOn;
-import javax.ejb.EJB;
-import javax.ejb.Singleton;
-import javax.ejb.Startup;
 import javax.enterprise.concurrent.ManagedThreadFactory;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import java.io.IOException;
 import java.util.List;
 
-
-@Singleton
-@Startup
-@DependsOn("RedisDao")
 public class GcmClient
 {
     private static final Logger log = LoggerFactory.getLogger(GcmClient.class);
@@ -37,10 +29,9 @@ public class GcmClient
     @Resource
     private static ManagedThreadFactory threadFactory;
 
-    @EJB
-    private static IBeaconDb dao;
+    private IBeaconDb dao;
 
-    public GcmClient() throws StauserverException
+    public GcmClient(IBeaconDb dao)
     {
         try
         {
@@ -59,8 +50,9 @@ public class GcmClient
         } catch (NamingException e)
         {
             String error = "Error getting ThreadFactory. " + e.getMessage();
-            throw new StauserverException(error, e);
         }
+
+        this.dao = dao;
     }
 
 

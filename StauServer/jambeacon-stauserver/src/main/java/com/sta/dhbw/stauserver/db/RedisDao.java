@@ -121,10 +121,16 @@ public class RedisDao implements IBeaconDb
         ArrayList<TrafficJamResource> resultList = new ArrayList<>();
 
         List<String> jamlist = jedis.lrange(LIST_JAM, 0, -1);
-        for (String id : jamlist)
+        if(jamlist != null && !jamlist.isEmpty())
         {
-            Map<String, String> attributeMap = jedis.hgetAll(FIELD_JAM + id);
-            resultList.add(Util.trafficJamFromMap(attributeMap));
+            for (String id : jamlist)
+            {
+                Map<String, String> attributeMap = jedis.hgetAll(FIELD_JAM + id);
+                if(attributeMap != null && !attributeMap.isEmpty())
+                {
+                    resultList.add(Util.trafficJamFromMap(attributeMap));
+                }
+            }
         }
         return resultList;
     }

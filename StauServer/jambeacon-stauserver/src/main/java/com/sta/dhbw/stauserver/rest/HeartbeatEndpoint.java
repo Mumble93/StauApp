@@ -16,14 +16,6 @@ public class HeartbeatEndpoint
     @GET
     public Response serviceIsRunning()
     {
-        dao.getTrafficJamList();
-        boolean isRunning = dao.isAlive();
-        if (isRunning)
-        {
-            return Response.ok().build();
-        } else
-        {
-            return Response.serverError().build();
-        }
+        return Response.ok().build();
     }
 }

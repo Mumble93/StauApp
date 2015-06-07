@@ -1,5 +1,6 @@
 package com.sta.dhbw.stauserver.rest;
 
+import com.google.android.gcm.server.Message;
 import com.sta.dhbw.stauserver.db.IBeaconDb;
 import com.sta.dhbw.stauserver.exception.StauserverException;
 import com.sta.dhbw.stauserver.gcm.GcmClient;
@@ -20,7 +21,6 @@ public class JamRestServiceEndpoint
     @EJB
     private static IBeaconDb dao;
 
-    @EJB
     private static GcmClient gcmClient;
 
     @GET
@@ -59,6 +59,11 @@ public class JamRestServiceEndpoint
     @Produces("application/json")
     public Response postJam(@HeaderParam("X-Request-Id") String requestId, TrafficJamResource trafficJamResource)
     {
+        if (gcmClient == null)
+        {
+            gcmClient = new GcmClient(dao);
+        }
+
         if (requestId == null || requestId.isEmpty())
         {
             return Response.status(Status.EXPECTATION_FAILED).entity("X-Request-Id must be set in header.").build();
@@ -83,7 +88,8 @@ public class JamRestServiceEndpoint
                 {
                     return Response.status(Status.BAD_REQUEST).entity(trafficJamResource).build();
                 }
-                gcmClient.sendToGcm(gcmClient.buildJamMessage(trafficJamResource));
+                Message message = gcmClient.buildJamMessage(trafficJamResource);
+                gcmClient.sendToGcm(message);
                 return Response.status(Status.CREATED).entity(trafficJamResource).build();
             }
         }
@@ -134,6 +140,11 @@ public class JamRestServiceEndpoint
     @DELETE
     public Response deleteTrafficJam(@HeaderParam("X-Request-Id") String requestId, @PathParam("id") String id)
     {
+        if (gcmClient == null)
+        {
+            gcmClient = new GcmClient(dao);
+        }
+
         if (null == requestId || requestId.isEmpty())
         {
             return Response.status(Status.EXPECTATION_FAILED).entity("X-Request-Id header must be set.").build();
@@ -153,7 +164,8 @@ public class JamRestServiceEndpoint
         } else
         {
             dao.deleteTrafficJam(id);
-            gcmClient.sendToGcm(gcmClient.buildDeleteMessage(id));
+            Message message = gcmClient.buildDeleteMessage(id);
+            gcmClient.sendToGcm(message);
             return Response.status(Status.OK).build();
         }
     }

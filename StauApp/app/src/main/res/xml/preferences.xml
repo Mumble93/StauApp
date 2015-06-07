@@ -2,21 +2,30 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <PreferenceCategory
-        android:title="Kategorie 1">
-        <CheckBoxPreference
-            android:title="Checkbox 1"
-            android:key="checkbox_1"
-            android:summary="Eine Zusammenfassung"/>
-        <CheckBoxPreference
-            android:key="checkbox_2"
-            android:title="Checkbox 2"
-            android:summary="Noch eine Zusammenfassung"/>
+        android:title="Daten">
+        <EditTextPreference
+            android:title="Registration Id"
+            android:key="gcm_id"
+            android:summary="Ihre GCM Id"
+            android:editable="false"/>
+        <EditTextPreference
+            android:title="X-Request-Header"
+            android:key="request_header"
+            android:summary="Der Request Header für Server Kommunikation"
+            android:editable="false"/>
+        <EditTextPreference
+            android:title="App Version"
+            android:key="app_version"
+            android:editable="false"/>
     </PreferenceCategory>
     <PreferenceCategory
-        android:title="Kategorie 2">
+        android:title="Stauerfassung">
         <EditTextPreference
-            android:title="Ein Textfeld"
-            android:key="textpreference_1"
-            android:summary="Das wird noch geändert"/>
+            android:title="Zeit zum Beginn der Messung"
+            android:key="beacon_delay"
+            android:summary="Zeit in Minuten, nach deren Ablauf die Messung beginnt"
+            android:editable="true"
+            android:inputType="number"
+            android:defaultValue="3"/>
     </PreferenceCategory>
 </PreferenceScreen>

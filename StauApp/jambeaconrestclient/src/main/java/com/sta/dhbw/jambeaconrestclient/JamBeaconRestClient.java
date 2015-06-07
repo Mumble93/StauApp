@@ -48,7 +48,7 @@ public class JamBeaconRestClient
             SERVER_ENDPOINT = "http://10.0.2.2:8080/rest/api/v1/";
         } else
         {
-            SERVER_ENDPOINT = "http://www.dhbw-jambeacon.org/rest/api/v1/";
+            SERVER_ENDPOINT = "http://www.dhbw-jambeacon.org:8080/rest/api/v1/";
         }
         REGISTER_ENDPOINT = SERVER_ENDPOINT + "users/register";
         UNREGISTER_ENDPOINT = SERVER_ENDPOINT + "users/unregister/";
@@ -325,9 +325,59 @@ public class JamBeaconRestClient
         return null;
     }
 
-    public void updateTrafficJam(TrafficJam trafficJam, String xRequestId)
+    public void updateTrafficJam(final TrafficJam trafficJam, final String xRequestId, final ITrafficJamCallback caller)
     {
+        new AsyncTask<Void, Void, TrafficJam>()
+        {
+            HttpURLConnection connection;
 
+            @Override
+            protected TrafficJam doInBackground(Void... params)
+            {
+                try
+                {
+                    connection = getConnection(HTTP_PUT, JAM_ENDPOINT);
+                    connection.setRequestProperty(X_REQUEST_HEADER, xRequestId);
+                    connection.setDoInput(true);
+                    connection.setDoOutput(true);
+
+                    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
+                    writer.write(new ObjectMapper().writeValueAsString(trafficJam));
+                    writer.flush();
+                    writer.close();
+
+                    int statusCode = connection.getResponseCode();
+
+                    if (statusCode != HttpURLConnection.HTTP_CREATED && statusCode != HttpURLConnection.HTTP_OK)
+                    {
+                        Log.e(TAG, "Error updating jam, status was " + statusCode);
+                        return null;
+                    } else
+                    {
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                        String response = reader.readLine();
+                        reader.close();
+                        return new ObjectMapper().readValue(response, TrafficJam.class);
+                    }
+
+                } catch (JamBeaconException e)
+                {
+                    Log.e(TAG, "Error getting connection. " + e.getMessage());
+                    return null;
+                } catch (IOException e)
+                {
+                    Log.e(TAG, "Error reading result. " + e.getMessage());
+                    return null;
+                }
+            }
+
+            @Override
+            protected void onPostExecute(TrafficJam result)
+            {
+                connection.disconnect();
+                caller.onTrafficJamUpdateComplete(result);
+            }
+        }.execute();
     }
 
 
