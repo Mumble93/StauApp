@@ -1,13 +1,10 @@
 import com.google.android.gcm.server.Message;
 import com.google.android.gcm.server.MulticastResult;
 import com.google.android.gcm.server.Sender;
-import com.sta.dhbw.stauserver.db.IBeaconDb;
-import com.sta.dhbw.stauserver.db.RedisDao;
 import com.sta.dhbw.stauserver.exception.StauserverException;
 import com.sta.dhbw.stauserver.resource.TrafficJamResource;
 import com.sta.dhbw.stauserver.util.Util;
 import org.junit.Test;
-import static org.junit.Assert.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +13,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+
+import static org.junit.Assert.assertEquals;
 
 public class GcmClientTest
 {

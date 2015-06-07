@@ -83,6 +83,7 @@ public class JamRestServiceEndpoint
                 {
                     return Response.status(Status.BAD_REQUEST).entity(trafficJamResource).build();
                 }
+                gcmClient.sendToGcm(gcmClient.buildJamMessage(trafficJamResource));
                 return Response.status(Status.CREATED).entity(trafficJamResource).build();
             }
         }
@@ -152,6 +153,7 @@ public class JamRestServiceEndpoint
         } else
         {
             dao.deleteTrafficJam(id);
+            gcmClient.sendToGcm(gcmClient.buildDeleteMessage(id));
             return Response.status(Status.OK).build();
         }
     }

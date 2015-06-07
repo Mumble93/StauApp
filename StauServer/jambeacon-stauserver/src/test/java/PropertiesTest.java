@@ -1,8 +1,10 @@
 import org.junit.Test;
-import static org.junit.Assert.*;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
+
+import static org.junit.Assert.*;
 
 public class PropertiesTest
 {

@@ -18,7 +18,7 @@ public class HeartbeatEndpoint
     {
         dao.getTrafficJamList();
         boolean isRunning = dao.isAlive();
-        if(isRunning)
+        if (isRunning)
         {
             return Response.ok().build();
         } else

@@ -71,7 +71,17 @@ public class GcmClient
         thread.start();
     }
 
-    public Message buildMessage(TrafficJamResource jamResource)
+    public Message buildDeleteMessage(String jamId)
+    {
+        return new Message.Builder()
+                .timeToLive(TTL_VALUE)
+                .addData("type", "delete")
+                .addData(Constants.JAM_ID, jamId)
+                .delayWhileIdle(false)
+                .build();
+    }
+
+    public Message buildJamMessage(TrafficJamResource jamResource)
     {
         Message.Builder builder = new Message.Builder()
                 .timeToLive(TTL_VALUE);
@@ -79,14 +89,17 @@ public class GcmClient
         {
             return builder
                     .collapseKey("syncTrafficJams")
+                    .delayWhileIdle(false)
                     .build();
         } else
         {
             return builder
+                    .addData("type", "jam")
                     .addData(Constants.JAM_ID, jamResource.getJamId().toString())
                     .addData(Constants.JAM_TIME, String.valueOf(jamResource.getTimestamp()))
                     .addData(Constants.JAM_LATITUDE, String.valueOf(jamResource.getLatitude()))
                     .addData(Constants.JAM_LONGITUDE, String.valueOf(jamResource.getLongitude()))
+                    .delayWhileIdle(false)
                     .build();
         }
     }

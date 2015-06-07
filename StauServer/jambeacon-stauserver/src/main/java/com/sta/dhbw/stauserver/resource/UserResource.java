@@ -14,7 +14,9 @@ public class UserResource implements Serializable
 
     private String userIdHash;
 
-    public UserResource(){}
+    public UserResource()
+    {
+    }
 
     public UserResource(String userId, String userIdHash)
     {

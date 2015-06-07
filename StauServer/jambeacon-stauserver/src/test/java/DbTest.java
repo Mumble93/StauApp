@@ -3,10 +3,8 @@ import com.sta.dhbw.stauserver.db.RedisDao;
 import com.sta.dhbw.stauserver.exception.StauserverException;
 import com.sta.dhbw.stauserver.resource.TrafficJamResource;
 import com.sta.dhbw.stauserver.rest.JamRestServiceEndpoint;
-
 import org.junit.BeforeClass;
 import org.junit.Ignore;
-import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
