@@ -9,6 +9,9 @@ import javax.json.JsonObject;
 import java.io.Serializable;
 import java.util.UUID;
 
+/**
+ * This class represents a reported traffic jam.
+ */
 @JsonIgnoreProperties({Constants.JAM_OWNER})
 public class TrafficJamResource implements Serializable
 {

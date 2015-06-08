@@ -7,6 +7,9 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import java.io.Serializable;
 
+/**
+ * This class represents a registered user.
+ */
 @JsonIgnoreProperties({"userIdHash"})
 public class UserResource implements Serializable
 {

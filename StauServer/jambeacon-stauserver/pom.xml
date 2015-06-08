@@ -86,6 +86,14 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.10.3</version>
+                <configuration>
+                    <show>private</show>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
                 <version>2.3</version>
                 <configuration>
@@ -99,10 +107,6 @@
                 <version>1.0.2.Final</version>
                 <configuration>
                     <filename>ROOT.war</filename>
-                    <!--<hostname>217.160.126.57</hostname>
-                    <port>9990</port>
-                    <username>pauljan</username>
-                    <password>kwt2email</password>-->
                 </configuration>
                 <executions>
                     <execution>

@@ -23,6 +23,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * A database access object that wraps the functionality of the Jedis Client to communicate with a REDIS instance. <br>
+ * An Enterprise Singleton Bean, will be initialized at Server startup.
+ */
 @Singleton
 @Startup
 public class RedisDao implements IBeaconDb
@@ -43,6 +47,15 @@ public class RedisDao implements IBeaconDb
     private static final String LIST_USERS = "users";
     private static final String USER_HASH_SET = "users:hashes";
 
+    /**
+     * This constructor will instantiate two Jedis Client objects, one for database interaction and one
+     * for listening on the keyevent channel, on the given host and port. The listening instance will start on a
+     * new Thread, instantiated by the server's default ManagedThreadFactory, since the subscribe operation is synchronous.
+     *
+     * @param redisHost The host of the REDIS instance.
+     * @param redisPort The port of the REDIS instance
+     * @throws StauserverException
+     */
     public RedisDao(String redisHost, int redisPort) throws StauserverException
     {
         try
@@ -74,11 +87,22 @@ public class RedisDao implements IBeaconDb
         listenerThread.start();
     }
 
+    /**
+     * The default constructor will connect to the standard REDIS port, 6379, on localhost
+     *
+     * @throws StauserverException
+     */
     public RedisDao() throws StauserverException
     {
         this("localhost", 6379);
     }
 
+    /**
+     * At server shutdown, this method checks whether the Thread listening on the keyevent channel is still running.
+     * If so, shutdown will be suspended until this Thread is interrupted.<br>
+     * This is to prevent the existence of multiple Threads listening on the same channel, which prevents thinning
+     * out the ThreadPool and overflowing the server log with redundant messages.
+     */
     @PreDestroy
     public void tearDown()
     {
@@ -98,12 +122,18 @@ public class RedisDao implements IBeaconDb
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isAlive()
     {
         return jedis.isConnected();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public TrafficJamResource getTrafficJam(String id)
     {
@@ -115,18 +145,21 @@ public class RedisDao implements IBeaconDb
         return Util.trafficJamFromMap(trafficJam);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<TrafficJamResource> getTrafficJamList()
     {
         ArrayList<TrafficJamResource> resultList = new ArrayList<>();
 
         List<String> jamlist = jedis.lrange(LIST_JAM, 0, -1);
-        if(jamlist != null && !jamlist.isEmpty())
+        if (jamlist != null && !jamlist.isEmpty())
         {
             for (String id : jamlist)
             {
                 Map<String, String> attributeMap = jedis.hgetAll(FIELD_JAM + id);
-                if(attributeMap != null && !attributeMap.isEmpty())
+                if (attributeMap != null && !attributeMap.isEmpty())
                 {
                     resultList.add(Util.trafficJamFromMap(attributeMap));
                 }
@@ -135,6 +168,9 @@ public class RedisDao implements IBeaconDb
         return resultList;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void storeTrafficJam(TrafficJamResource jam) throws StauserverException
     {
@@ -145,6 +181,7 @@ public class RedisDao implements IBeaconDb
         transaction.lpush(LIST_JAM, jamId);
         //Map the jam to the owner, for update purposes
         transaction.set(jamId, jam.getOwner());
+        //The jam will be deleted after 10 minutes (600 seconds)
         transaction.expire(FIELD_JAM + jamId, 600);
 
         List<Response<?>> responses = transaction.execGetResponse();
@@ -160,6 +197,8 @@ public class RedisDao implements IBeaconDb
             }
             if (response.get() instanceof Long)
             {
+                //LPUSH operation responds with length of list after push
+                //EXPIRE will return 1 on success
                 if ((Long) response.get() < 0L)
                 {
                     String error = "Error storing new Traffic Jam with params: \n" + jam.toJsonObject().toString();
@@ -171,12 +210,18 @@ public class RedisDao implements IBeaconDb
         log.info("Created new Traffic Jam with id: " + jamId);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void updateTrafficJam(TrafficJamResource trafficJam)
     {
         updateTrafficJam(trafficJam, false);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void updateTrafficJam(TrafficJamResource trafficJam, boolean updateOwner)
     {
@@ -199,6 +244,7 @@ public class RedisDao implements IBeaconDb
             transaction.set(trafficJam.getJamId().toString(), updatedOwner);
         }
         transaction.hmset(jamId, existingJamValues);
+        //Renew the expiration of the jam to again 10 minutes (600 seconds)
         transaction.expire(jamId, 600);
 
         transaction.exec();
@@ -206,6 +252,9 @@ public class RedisDao implements IBeaconDb
         log.info("Updated Traffic Jam with Id: " + jamId);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void deleteTrafficJam(String id) throws NotFoundException
     {
@@ -232,12 +281,19 @@ public class RedisDao implements IBeaconDb
 
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<String> getRegisteredUsers()
     {
-        return jedis.lrange(LIST_USERS, 0, -1);
+        //LRANGE key start end
+        return jedis.lrange(LIST_USERS, 0, -1); //gives back the whole list
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String createUser(String id, String hash) throws StauserverException
     {
@@ -268,6 +324,9 @@ public class RedisDao implements IBeaconDb
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public long deleteUser(String id, String hash) throws StauserverException
     {
@@ -288,9 +347,13 @@ public class RedisDao implements IBeaconDb
 
         List<Response<?>> responses = transaction.execGetResponse();
 
+        //In both cases the returned value should be 1, since 1 element should have been removed respectively
         return (Long) responses.get(0).get() & (Long) responses.get(1).get();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void updateUser(String oldId, String updatedId) throws StauserverException
     {
@@ -323,17 +386,30 @@ public class RedisDao implements IBeaconDb
 
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean userIsRegistered(String hash)
     {
         return jedis.sismember(USER_HASH_SET, hash);
     }
 
+    /**
+     * At instantiation of the RedisDao class, this will create a new Jedis object which will be used to subscribe to the
+     * keyevent channel and listen for "expired" events
+     */
     private class ExpiryListenerRunnable implements Runnable
     {
         private String redisHost;
         private int redisPort;
 
+        /**
+         * Host and Port should be the same as the database used for storing jams
+         *
+         * @param redisHost The host, as String
+         * @param redisPort The port, as int
+         */
         public ExpiryListenerRunnable(String redisHost, int redisPort)
         {
             this.redisHost = redisHost;
@@ -349,6 +425,11 @@ public class RedisDao implements IBeaconDb
         }
     }
 
+    /**
+     * This class is used to react to "expired" events that are sent on the keyevent channel.<br>
+     * If such an event is fired, the Id of the expired resource will be removed from the separate list, holding all
+     * Ids of all stored jams.
+     */
     private class ExpiredListener extends JedisPubSub
     {
         private final Logger log = LoggerFactory.getLogger(ExpiredListener.class);

@@ -1,5 +1,8 @@
 package com.sta.dhbw.stauserver.util;
 
+/**
+ * This class holds all constant variables used throughout the project.
+ */
 public final class Constants
 {
     public static final String JAM_ID = "jamId";

@@ -16,6 +16,9 @@ import javax.naming.NamingException;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * This class wraps the communication with Google Cloud Messaging service, using the gcm-server helper library.
+ */
 public class GcmClient
 {
     private static final Logger log = LoggerFactory.getLogger(GcmClient.class);
@@ -31,6 +34,12 @@ public class GcmClient
 
     private IBeaconDb dao;
 
+    /**
+     * Constructor gets the default ManagedThreadFactory of the server. Separate Threads need to used to send messages,
+     * since in case of unavailability, exponential backoff is used to retry sending.
+     *
+     * @param dao The DAO that is connected to the database which holds users and jams.
+     */
     public GcmClient(IBeaconDb dao)
     {
         try
@@ -56,6 +65,11 @@ public class GcmClient
     }
 
 
+    /**
+     * Creates a new Thread with a MessageRunnable that tries sending the Message.
+     *
+     * @param message The Message to be sent.
+     */
     public void sendToGcm(Message message)
     {
         Runnable messageRunnable = new MessageRunnable(message, dao.getRegisteredUsers());
@@ -63,6 +77,12 @@ public class GcmClient
         thread.start();
     }
 
+    /**
+     * Builds a message that tells the devices to delete a certain jam from the local list.
+     *
+     * @param jamId The Id of the traffic jam object to be deleted, as String
+     * @return The Message object to be sent
+     */
     public Message buildDeleteMessage(String jamId)
     {
         return new Message.Builder()
@@ -73,6 +93,13 @@ public class GcmClient
                 .build();
     }
 
+    /**
+     * Builds a Message that will deliver the details of a freshly reported traffic jam.<br>
+     * If parameter is null, a Send-To-Sync Message will be returned.
+     *
+     * @param jamResource The freshly posted TrafficJamResource
+     * @return A Message containing the information of the TrafficJamResource
+     */
     public Message buildJamMessage(TrafficJamResource jamResource)
     {
         Message.Builder builder = new Message.Builder()
@@ -96,6 +123,11 @@ public class GcmClient
         }
     }
 
+    /**
+     * This class is used to send Messages on a separate Thread, since the send operation will block the calling Thread
+     * until the Message is sent. In case of GCM unavailability, exponential backoff is used, which can take up several
+     * minutes.
+     */
     private class MessageRunnable implements Runnable
     {
         private final Logger log = LoggerFactory.getLogger(MessageRunnable.class);
@@ -109,6 +141,11 @@ public class GcmClient
             this.recipients = recipients;
         }
 
+        /**
+         * Sifts through the result of a sending operation to see if action must be taken.
+         *
+         * @param multicastResult The MulticastResult to analyse
+         */
         private void handleMulticastResult(MulticastResult multicastResult)
         {
             if (null == multicastResult)
@@ -129,6 +166,7 @@ public class GcmClient
                         String errorCode = messageResult.getErrorCodeName();
                         if (com.google.android.gcm.server.Constants.ERROR_NOT_REGISTERED.equals(errorCode))
                         {
+                            //User has unregistered from GCM or deleted app. Delete the Id from the database
                             int resultMessageIndex = messageResultList.indexOf(messageResult);
                             String userId = recipients.get(resultMessageIndex);
                             try
@@ -146,6 +184,8 @@ public class GcmClient
                     {
                         if (messageResult.getCanonicalRegistrationId() != null)
                         {
+                            //Message has been delivered, but the user is using a different Id. Replace the existing
+                            //one with the new Id.
                             int resultMessageIndex = messageResultList.indexOf(messageResult);
                             String originalId = recipients.get(resultMessageIndex);
                             try
@@ -161,6 +201,9 @@ public class GcmClient
             }
         }
 
+        /**
+         * Sends the Message to the GCM Service.
+         */
         @Override
         public void run()
         {

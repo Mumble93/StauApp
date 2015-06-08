@@ -11,6 +11,9 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+/**
+ * Supplies the REST-ful endpoint for user registration, update, and deletion
+ */
 @Path("users")
 public class UserRestServiceEndpoint
 {
@@ -19,6 +22,13 @@ public class UserRestServiceEndpoint
     @EJB
     private static IBeaconDb dao;
 
+    /**
+     * Stores a new user with the given GCM registration Id in the database.
+     *
+     * @param userId The GCM registration Id of the user
+     * @return 400 if the id wasn't set or the database operation failed, 201 if the user was successfully stored
+     * @throws StauserverException
+     */
     @Path("register")
     @POST
     @Produces("text/plain")
@@ -59,6 +69,14 @@ public class UserRestServiceEndpoint
         return response;
     }
 
+    /**
+     * Updates an existing user. User is created if not exists.
+     *
+     * @param requestId   The current internal Id of the user
+     * @param credentials The old and the new registration Ids, formatted as _oldId_;_newId_
+     * @return 200 if operation was successful
+     * @throws StauserverException
+     */
     @Path("update")
     @PUT
     @Consumes("text/plain")
@@ -102,6 +120,13 @@ public class UserRestServiceEndpoint
     }
 
 
+    /**
+     * Deletes an existing user
+     *
+     * @param userId The registration Id of the user to be deleted
+     * @return 200 if successful, 404 if not exists, 417 or 500 if failed
+     * @throws StauserverException
+     */
     @Path("unregister/{id}")
     @DELETE
     public Response unregisterUser(@PathParam("id") String userId) throws StauserverException

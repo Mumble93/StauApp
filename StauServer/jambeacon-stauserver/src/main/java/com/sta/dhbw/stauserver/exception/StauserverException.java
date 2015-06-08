@@ -1,5 +1,8 @@
 package com.sta.dhbw.stauserver.exception;
 
+/**
+ * Custom exception to be thrown if another one is caught.
+ */
 public class StauserverException extends Exception
 {
     public StauserverException()
