@@ -4,26 +4,30 @@ import android.content.Context;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.os.AsyncTask;
-
-import com.sta.dhbw.jambeaconrestclient.JamBeaconRestClient;
 
 import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
+/**
+ * Multi purpose utility class.
+ */
 public class Utils
 {
+    /**
+     * Enum to represent different issues that can arise while using the app, such as
+     * unavailable network, server or deactivated GPS.
+     */
     public enum ConnectionIssue
     {
         GPS_NOT_AVAILABLE, NETWORK_NOT_AVAILABLE, SERVER_NOT_AVAILABLE, NETWORK_TIMEOUT,
     }
 
-    public enum RestIssue
-    {
-        GCM_REGISTRATION_AT_SERVER_FAILED
-    }
-
+    /**
+     * Turns a timestamp into String representation in the format of HH:mm:ss
+     *
+     * @param timestamp The timestamp as long.
+     * @return The timestamp formatted as HH:mm:ss String.
+     */
     public static String timstampToString(long timestamp)
     {
         DateFormat dateFormat = DateFormat.getTimeInstance();
@@ -54,17 +58,5 @@ public class Utils
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = cm.getActiveNetworkInfo();
         return networkInfo != null && networkInfo.isConnected();
-    }
-
-    public class AvailabiltyCheckerTask extends AsyncTask<Context, Void, Boolean>
-    {
-        private JamBeaconRestClient restClient;
-
-
-        @Override
-        protected Boolean doInBackground(Context... params)
-        {
-            return null;
-        }
     }
 }

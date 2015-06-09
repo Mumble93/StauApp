@@ -10,8 +10,21 @@ import android.support.annotation.NonNull;
 import com.sta.dhbw.stauapp.R;
 import com.sta.dhbw.stauapp.util.Utils.ConnectionIssue;
 
+/**
+ * When a connectivity issue with either GPS, Internet or the server arises, this
+ * dialog will inform the user accordingly.
+ */
 public class ConnectionIssueDialogFragment extends DialogFragment
 {
+    /**
+     * Returns a ConnectionIssueDialogFragment with a title and text set to cover a specific connection
+     * issue.
+     *
+     * @param issue           The specific issue as Enum.
+     * @param finishOnConfirm Boolean to determine whether the app should finish on pressing the button of
+     *                        the dialog
+     * @return A new ConnectionIssueDialogFragment object.
+     */
     public static ConnectionIssueDialogFragment newInstance(ConnectionIssue issue, boolean finishOnConfirm)
     {
         ConnectionIssueDialogFragment frag = new ConnectionIssueDialogFragment();

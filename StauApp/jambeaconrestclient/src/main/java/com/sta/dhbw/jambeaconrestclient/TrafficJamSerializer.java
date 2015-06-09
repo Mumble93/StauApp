@@ -9,7 +9,9 @@ import com.sta.dhbw.jambeaconrestclient.util.Constants;
 
 import java.io.IOException;
 
-
+/**
+ * Custom JACKSON Serializer
+ */
 public final class TrafficJamSerializer extends JsonSerializer<TrafficJam>
 {
     private static final String TAG = TrafficJamSerializer.class.getSimpleName();

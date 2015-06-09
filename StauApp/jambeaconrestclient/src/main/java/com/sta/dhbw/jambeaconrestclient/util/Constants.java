@@ -1,5 +1,8 @@
 package com.sta.dhbw.jambeaconrestclient.util;
 
+/**
+ * Class to hold all constant values used by the module.
+ */
 public final class Constants
 {
     public static final String JAM_ID = "jamId";

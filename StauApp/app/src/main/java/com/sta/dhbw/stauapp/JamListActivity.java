@@ -31,6 +31,10 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * Activity that displays a list of all known traffic jams.<br>
+ * A selected list item will display the location of the corresponding jam in the JamMapActivity.
+ */
 public class JamListActivity extends ListActivity implements ITrafficJamCallback
 {
     private static final String TAG = JamListActivity.class.getSimpleName();
@@ -43,6 +47,9 @@ public class JamListActivity extends ListActivity implements ITrafficJamCallback
 
     private ProgressDialog dialog;
 
+    /**
+     * Class to hold the view elements of a list item in order to comply with View Holder Pattern.
+     */
     private static class RowViewHolder
     {
         TextView jamIdText;
@@ -67,8 +74,13 @@ public class JamListActivity extends ListActivity implements ITrafficJamCallback
             public void onItemClick(AdapterView<?> parent, View view, int position, long id)
             {
                 Log.d(TAG, "Item " + position + " clicked");
+
                 TrafficJam jam = (TrafficJam) listView.getItemAtPosition(position);
-                LatLng latLng = new LatLng(jam.getLocation().getLatitude(), jam.getLocation().getLongitude());
+                double latitude = jam.getLocation().getLatitude();
+                double longitude = jam.getLocation().getLongitude();
+
+                LatLng latLng = new LatLng(latitude, longitude);
+
                 Intent intent = new Intent(view.getContext(), JamMapActivity.class);
                 intent.putExtra("location", latLng);
                 startActivity(intent);
@@ -81,14 +93,6 @@ public class JamListActivity extends ListActivity implements ITrafficJamCallback
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
     }
-
-    /*@Override
-    public void onStart()
-    {
-        super.onStart();
-        dialog.show();
-        restClient.getTrafficJamList(this);
-    }*/
 
     @Override
     public void onResume()
@@ -144,10 +148,12 @@ public class JamListActivity extends ListActivity implements ITrafficJamCallback
     {
         if (arrayAdapter == null)
         {
+            //Get a new adapter
             arrayAdapter = new JamListAdapter(this, R.layout.row_layout, trafficJamList);
             setListAdapter(arrayAdapter);
         } else
         {
+            //Replace all existing data in the adapter
             arrayAdapter.clear();
             arrayAdapter.addAll(trafficJamList);
             arrayAdapter.notifyDataSetChanged();
@@ -167,11 +173,19 @@ public class JamListActivity extends ListActivity implements ITrafficJamCallback
 
     }
 
+    /**
+     * Gets a {@code List} of all stored TrafficJams.
+     *
+     * @return A List of TrafficJams.
+     */
     public static List<TrafficJam> getTrafficJams()
     {
         return transportList;
     }
 
+    /**
+     * Custom ArrayAdapter to handle TrafficJam objects
+     */
     protected static class JamListAdapter extends ArrayAdapter<TrafficJam>
     {
         private Context context;
@@ -187,6 +201,7 @@ public class JamListActivity extends ListActivity implements ITrafficJamCallback
         @Override
         public View getView(int position, View convertView, ViewGroup parent)
         {
+            //Use the View Holder Pattern to ensure smooth scrolling
             RowViewHolder rowViewHolder;
 
             TrafficJam currentJam = trafficJamList.get(position);
@@ -207,6 +222,7 @@ public class JamListActivity extends ListActivity implements ITrafficJamCallback
                 rowViewHolder = (RowViewHolder) convertView.getTag();
             }
 
+            //Convert latitude and longitude to human readable format
             Geocoder geocoder = new Geocoder(getContext(), Locale.getDefault());
             String locality = null;
             String adminArea = null;

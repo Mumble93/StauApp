@@ -13,6 +13,12 @@ import com.sta.dhbw.stauapp.dialogs.ConnectionIssueDialogFragment;
 import com.sta.dhbw.stauapp.util.Utils;
 import com.sta.dhbw.stauapp.util.Utils.ConnectionIssue;
 
+/**
+ * The Splash Screen will be called when the application has not been started previously or has been
+ * stopped completely.<br>
+ * The connectivity checks for GPS, network, and server will be executed here. If they fail, an appropriate error
+ * will be displayed and the app will terminate.
+ */
 public class SplashScreen extends Activity implements IHeartbeatCallback
 {
     private static final String TAG = SplashScreen.class.getSimpleName();
@@ -55,6 +61,7 @@ public class SplashScreen extends Activity implements IHeartbeatCallback
         progressDialog.setCanceledOnTouchOutside(false);
         progressDialog.setIndeterminate(true);
 
+        //Check for DEBUG mode
         if (android.os.Debug.isDebuggerConnected())
         {
             progressDialog.setMessage("Welcome, developer...");

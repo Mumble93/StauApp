@@ -12,6 +12,10 @@ import com.sta.dhbw.jambeaconrestclient.util.Constants;
 
 import java.util.UUID;
 
+/**
+ * This class represents a traffic jam resource on the server side and is sent to the
+ * jam endpoint, when a traffic jam has been detected by the BeaconService.
+ */
 @JsonSerialize(using = TrafficJamSerializer.class)
 @JsonDeserialize(using = TrafficJamDeserializer.class)
 public class TrafficJam implements Parcelable
@@ -33,6 +37,12 @@ public class TrafficJam implements Parcelable
         }
     }
 
+    /**
+     * Returns a TrafficJam without Id.
+     *
+     * @param location  The {@code Location} of the jam.
+     * @param timestamp The timestamp of detection, as long.
+     */
     public TrafficJam(Location location, long timestamp)
     {
         this(location, timestamp, null);
@@ -53,11 +63,18 @@ public class TrafficJam implements Parcelable
         return id;
     }
 
+    /**
+     * @return A double array, containing longitude and latitude of the location.
+     */
     private double[] getLocationArray()
     {
         return new double[]{location.getLongitude(), location.getLatitude()};
     }
 
+    /**
+     * @param locationArray A double array, containing longitude and latitude.
+     * @return A {@code Location} object, with the provider set to the LocationManager.GPS_PROVIDER
+     */
     private Location locationFromArray(double[] locationArray)
     {
         Location location = new Location(LocationManager.GPS_PROVIDER);
@@ -94,6 +111,11 @@ public class TrafficJam implements Parcelable
         }
     };
 
+    /**
+     * Creates a TrafficJam object from a {@code Parcel}.
+     *
+     * @param in The Parcel from which to create the TrafficJam.
+     */
     private TrafficJam(Parcel in)
     {
         this.id = UUID.fromString(in.readString());

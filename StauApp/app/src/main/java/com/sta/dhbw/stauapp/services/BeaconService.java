@@ -52,19 +52,29 @@ public class BeaconService extends Service implements ITrafficJamCallback
     }
 
 
+    /**
+     * Waits for a specified delay in minutes or the first time the user is faster than 65 km/h to start the
+     * traffic jam detection. When detection started, location will be polled every 3 minutes.
+     * {@inheritDoc}
+     */
     @Override
     public int onStartCommand(Intent intent, int flags, int id)
     {
         Log.i(TAG, "Beacon Service was started.");
+
         int delay = Integer.parseInt(sharedPreferences.getString("beacon_delay", "3"));
+
         Log.d(TAG, "Starting Beacon with " + delay + " minutes delay");
+
         if (delay == 0)
         {
+            //Start immediately
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000, 0, locationListener);
             beaconHasStarted = true;
             sendBroadcast(new Intent().setAction(MainActivity.BeaconBroadcastReceiver.BEACON_STARTET));
         } else
         {
+            //Check location every minute to determine speed
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, locationListener);
         }
         return super.onStartCommand(intent, flags, id);
@@ -96,6 +106,10 @@ public class BeaconService extends Service implements ITrafficJamCallback
     }
 
 
+    /**
+     * Custom {@code LocationListener}, that will check if the driven distance between two Locations
+     * is below a certain value. If so, a new TrafficJam will be sent to the server.
+     */
     private class BeaconLocationListener implements LocationListener
     {
         private int delayCounter = 0;
@@ -105,11 +119,12 @@ public class BeaconService extends Service implements ITrafficJamCallback
         {
             if (!beaconHasStarted)
             {
+                //If the detection has not started check the speed
                 if (location.hasSpeed())
                 {
                     //Speed is returned in meter/second
                     float speed = location.getSpeed() * 3.6f;
-                    if (speed >=65.0f)
+                    if (speed >= 65.0f)
                     {
                         beaconHasStarted = true;
                         lastLocation = location;
@@ -146,7 +161,7 @@ public class BeaconService extends Service implements ITrafficJamCallback
                 msg += "on " + DateFormat.getTimeInstance().format(date);
 
                 Log.d(TAG, msg);
-                if(reportedTrafficJam == null)
+                if (reportedTrafficJam == null)
                 {
                     reportedTrafficJam = new TrafficJam(location, date.getTime());
                     restClient.postTrafficJam(reportedTrafficJam, sharedPreferences.getString(PrefFields.PROPERTY_X_REQUEST_ID, ""), caller);
@@ -192,7 +207,6 @@ public class BeaconService extends Service implements ITrafficJamCallback
                 Log.i(TAG, "Provider enabled while service running");
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000, 0, locationListener);
                 sendBroadcast(new Intent().setAction(MainActivity.BeaconBroadcastReceiver.BEACON_STARTET));
-
             }
 
         }
@@ -208,6 +222,14 @@ public class BeaconService extends Service implements ITrafficJamCallback
         }
     }
 
+    /**
+     * Checks if the distance between two locations is below the minimum value.<br>
+     * Default minimum distance is 2.25km, which implies an average speed of 45km/h.
+     *
+     * @param lastLocation    The last measured Location.
+     * @param currentLocation The current Location.
+     * @return True if the distance between both locations is below minimum, False otherwise.
+     */
     protected boolean drivenDistanceBelowMinimum(Location lastLocation, Location currentLocation)
     {
         float results[] = new float[1];

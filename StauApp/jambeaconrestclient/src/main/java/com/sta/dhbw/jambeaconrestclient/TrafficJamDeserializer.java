@@ -12,6 +12,9 @@ import com.sta.dhbw.jambeaconrestclient.util.Constants;
 import java.io.IOException;
 import java.util.UUID;
 
+/**
+ * Custom JACKSON Deserializer
+ */
 public final class TrafficJamDeserializer extends JsonDeserializer<TrafficJam>
 {
     private static final String TAG = TrafficJamDeserializer.class.getSimpleName();

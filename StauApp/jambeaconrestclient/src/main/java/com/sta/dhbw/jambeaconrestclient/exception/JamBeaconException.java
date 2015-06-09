@@ -1,5 +1,8 @@
 package com.sta.dhbw.jambeaconrestclient.exception;
 
+/**
+ * Custom {@code Exception} to be thrown in case of error.
+ */
 public class JamBeaconException extends Exception
 {
     private static final long SERIAL_VERSION_UID = 20150508L;

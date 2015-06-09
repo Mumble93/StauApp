@@ -16,9 +16,12 @@ import com.sta.dhbw.stauapp.settings.PrefFields;
 
 import java.io.IOException;
 
+/**
+ * This Service is used to retrieve a new Google Cloud Messaging Token.
+ */
 public class RequestGcmTokenService extends IntentService implements IUserCallback
 {
-    public static final String TAG = RequestGcmTokenService.class.getSimpleName();
+    private static final String TAG = RequestGcmTokenService.class.getSimpleName();
     private SharedPreferences sharedPreferences;
 
 
@@ -27,6 +30,10 @@ public class RequestGcmTokenService extends IntentService implements IUserCallba
         super("RequestGcmTokenService");
     }
 
+    /**
+     * Requests a new GCM Token, stores it the default Shared Preferences and sends it to the server.
+     * {@inheritDoc}
+     */
     @Override
     protected void onHandleIntent(Intent intent)
     {
@@ -55,6 +62,12 @@ public class RequestGcmTokenService extends IntentService implements IUserCallba
         }
     }
 
+    /**
+     * Sends the GCM Token to the server.
+     *
+     * @param token    The GCM Token as String.
+     * @param isUpdate Boolean to determine whether sending to server as POST or PUT request
+     */
     private void sendTokenToServer(String token, boolean isUpdate)
     {
         JamBeaconRestClient restClient = new JamBeaconRestClient();
@@ -71,6 +84,9 @@ public class RequestGcmTokenService extends IntentService implements IUserCallba
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onRegisterComplete(String xRequestId)
     {
@@ -93,6 +109,9 @@ public class RequestGcmTokenService extends IntentService implements IUserCallba
 
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onUserUpdateComplete(String updatedXRequestId)
     {
@@ -114,6 +133,9 @@ public class RequestGcmTokenService extends IntentService implements IUserCallba
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onUserUnregister(Integer resultCode)
     {

@@ -8,6 +8,10 @@ import android.preference.PreferenceManager;
 
 import com.sta.dhbw.stauapp.R;
 
+/**
+ * Class that handles all user editable settings.<br>
+ * Default value for delay between beacon activation and beginning of jam detection is set to 3 minutes.
+ */
 public class SettingsFragment extends PreferenceFragment
 {
 
@@ -21,9 +25,11 @@ public class SettingsFragment extends PreferenceFragment
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
+        //For debugging only, REMOVE IN PRODUCTION
         regId = (EditTextPreference) findPreference("gcm_id");
         regId.setText(sharedPreferences.getString(PrefFields.PROPERTY_REG_ID, ""));
 
+        //For debugging only, REMOVE IN PRODUCTION
         requestHeader = (EditTextPreference) findPreference("request_header");
         requestHeader.setText(sharedPreferences.getString(PrefFields.PROPERTY_X_REQUEST_ID, ""));
 

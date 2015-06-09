@@ -22,7 +22,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -38,7 +37,10 @@ import com.sta.dhbw.stauapp.settings.SettingsActivity;
 import com.sta.dhbw.stauapp.util.Utils;
 import com.sta.dhbw.stauapp.util.Utils.ConnectionIssue;
 
-
+/**
+ * The main activity of this application. From here, the user is able to view the list of jams, get to the
+ * settings, and start the BeaconService.
+ */
 public class MainActivity extends Activity implements IHeartbeatCallback
 {
     private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
@@ -53,8 +55,7 @@ public class MainActivity extends Activity implements IHeartbeatCallback
     private static BeaconBroadcastReceiver beaconBroadcastReceiver = null;
 
 
-
-    Button jamListButton, beaconButton, devloperButton;
+    Button jamListButton, beaconButton, developerButton;
     GoogleCloudMessaging gcm;
     NotificationManager notificationManager;
 
@@ -77,12 +78,10 @@ public class MainActivity extends Activity implements IHeartbeatCallback
             receiverIsRegistered = true;
         }
 
-        if(beaconBroadcastReceiver == null)
+        if (beaconBroadcastReceiver == null)
         {
             beaconBroadcastReceiver = new BeaconBroadcastReceiver();
         }
-
-
 
         Log.d(TAG, "Registered RestIssueBroadcastReceiver");
 
@@ -90,11 +89,9 @@ public class MainActivity extends Activity implements IHeartbeatCallback
 
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
-
-
         jamListButton = (Button) findViewById(R.id.view_traffic_issues);
         beaconButton = (Button) findViewById(R.id.start_beacon);
-        devloperButton = (Button) findViewById(R.id.start_developer_activity);
+        developerButton = (Button) findViewById(R.id.start_developer_activity);
 
         if (beaconStarted)
         {
@@ -106,7 +103,7 @@ public class MainActivity extends Activity implements IHeartbeatCallback
 
         context = getApplicationContext();
 
-        devloperButton.setOnClickListener(new View.OnClickListener()
+        developerButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
             public void onClick(View v)
@@ -180,7 +177,7 @@ public class MainActivity extends Activity implements IHeartbeatCallback
                 fragment.show(getFragmentManager(), "dialog");
             } else
             {
-                //Check if server is reachable
+                //Check if server is available
                 restClient.checkServerAvailability(this);
             }
         } else
@@ -318,6 +315,9 @@ public class MainActivity extends Activity implements IHeartbeatCallback
         }
     }
 
+    /**
+     * Starts the RequestGcmTokenService to retrieve a new GCM Token in the background.
+     */
     private void registerInBackground()
     {
         Log.i(TAG, "Getting new Registration Id");
@@ -330,6 +330,9 @@ public class MainActivity extends Activity implements IHeartbeatCallback
         sharedPreferences.edit().putInt(PrefFields.PROPERTY_APP_VERSION, getAppVersion(context)).apply();
     }
 
+    /**
+     * Starts the BeaconService and registers a {@code BroadcastReceiver} to receive messages from the service.
+     */
     private void startBeacon()
     {
         SharedPreferences sharedPreferences = getSharedPreferences();
@@ -342,6 +345,9 @@ public class MainActivity extends Activity implements IHeartbeatCallback
         beaconStarted = true;
     }
 
+    /**
+     * Stops the BeaconService and unregisters the BeaconBroadcastReceiver.
+     */
     private void stopBeacon()
     {
         Toast.makeText(this, "Beacon deaktiviert", Toast.LENGTH_SHORT).show();
@@ -352,6 +358,9 @@ public class MainActivity extends Activity implements IHeartbeatCallback
         dismissBeaconNotification();
     }
 
+    /**
+     * Displays a notification in the Status Bar to inform the user that traffic jam detection has started.
+     */
     private void showBeaconNotification()
     {
         Notification.Builder builder = new Notification.Builder(this)
@@ -360,15 +369,21 @@ public class MainActivity extends Activity implements IHeartbeatCallback
                 .setContentText(getString(R.string.jam_detection_running))
                 .setContentIntent(PendingIntent.getActivity(this, 0,
                         new Intent(this, MainActivity.class), 0))
-                .setVibrate(new long[]{0, 1000});
+                .setVibrate(new long[]{0, 1000}); //Vibrate for 1 second
         notificationManager.notify(BEACON_NOTIFICATION, builder.build());
     }
 
+    /**
+     * Dismisses the Status Bar notification when the BeaconService stops.
+     */
     private void dismissBeaconNotification()
     {
         notificationManager.cancel(BEACON_NOTIFICATION);
     }
 
+    /**
+     * Custom {@code BroadcastReceiver} to receive broadcasts from the BeaconService.
+     */
     public class BeaconBroadcastReceiver extends BroadcastReceiver
     {
         public static final String BEACON_STARTET = "com.sta.dhbw.stauapp.BEACON_STARTET";
@@ -381,6 +396,9 @@ public class MainActivity extends Activity implements IHeartbeatCallback
         }
     }
 
+    /**
+     * Custom {@code BroadcastReceiver} to receive broadcasts in case a REST call failed or succeeded.
+     */
     public class RestIssueBroadcastReceiver extends BroadcastReceiver
     {
         public static final String REST_EVENT = "com.sta.dhbw.stauapp.REST_EVENT";

@@ -1,5 +1,8 @@
 package com.sta.dhbw.stauapp.settings;
 
+/**
+ * Class to hold the keys used to store values in the default {@code SharedPreferences} of the application
+ */
 public final class PrefFields
 {
     public static final String PROPERTY_REG_ID = "registration_id";

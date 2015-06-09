@@ -27,6 +27,9 @@ import com.sta.dhbw.stauapp.settings.SettingsActivity;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * Activity that displays various developer options. Should not be visible to normal user.
+ */
 public class DeveloperActivity extends Activity implements IHeartbeatCallback, ITrafficJamCallback, IUserCallback
 {
     private static final String TAG = DeveloperActivity.class.getSimpleName();

@@ -18,7 +18,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import static com.sta.dhbw.jambeaconrestclient.util.Constants.APPLICATION_JSON;
 import static com.sta.dhbw.jambeaconrestclient.util.Constants.HTTP_DELETE;
@@ -27,7 +26,10 @@ import static com.sta.dhbw.jambeaconrestclient.util.Constants.HTTP_POST;
 import static com.sta.dhbw.jambeaconrestclient.util.Constants.HTTP_PUT;
 import static com.sta.dhbw.jambeaconrestclient.util.Constants.TEXT_PLAIN;
 
-
+/**
+ * This class encapsulates all communication with the server's REST-ful service. All calls are asynchronous,
+ * since Android does not allow network activity on the main thread.
+ */
 public class JamBeaconRestClient
 {
     private static final String TAG = JamBeaconRestClient.class.getSimpleName();
@@ -36,6 +38,11 @@ public class JamBeaconRestClient
 
     private static final String X_REQUEST_HEADER = "X-Request-Id";
 
+    /**
+     * Constructor initializes service endpoints depending on where and how the application started.<br>
+     * If started on physical device with debugger or on emulator, the endpoints will target localhost,
+     * otherwise they will target the server on www.dhbw-jambeacon.org:8080.
+     */
     public JamBeaconRestClient()
     {
         if (android.os.Debug.isDebuggerConnected())
@@ -58,6 +65,12 @@ public class JamBeaconRestClient
     }
 
 
+    /**
+     * POST to the user endpoint. Returns the identification header as String.
+     *
+     * @param userId The GCM Token that will be registered on the server, as String
+     * @param caller The calling instance that implements the onRegisterComplete method.
+     */
     public void registerUser(String userId, final IUserCallback caller)
     {
         Log.d(TAG, "REGISTERING USER");
@@ -117,6 +130,14 @@ public class JamBeaconRestClient
 
     }
 
+    /**
+     * PUT to the user endpoint. Returns the new identification header as String.
+     *
+     * @param oldId          The old GCM Token String.
+     * @param updatedId      The new GCM Token String.
+     * @param xRequestHeader The current identification header, as String.
+     * @param caller         The calling instance that implements the onUserUpdateComplete method.
+     */
     public void updateUser(String oldId, String updatedId, final String xRequestHeader, final IUserCallback caller)
     {
         Log.d(TAG, "UPDATING USER");
@@ -173,6 +194,12 @@ public class JamBeaconRestClient
 
     }
 
+    /**
+     * DELETE to the user endpoint. Returns the response's status code.
+     *
+     * @param userId The GCM Token that should be deleted, as String.
+     * @param caller The calling instance, implementing the onUserUnregister method.
+     */
     public void unregisterUser(final String userId, final IUserCallback caller)
     {
         new AsyncTask<Void, Void, Integer>()
@@ -200,6 +227,7 @@ public class JamBeaconRestClient
             @Override
             protected void onPostExecute(Integer result)
             {
+                caller.onUserUnregister(result);
                 connection.disconnect();
             }
         }.execute();
@@ -207,7 +235,13 @@ public class JamBeaconRestClient
 
     }
 
-
+    /**
+     * POST to the traffic jam endpoint. Returns the created TrafficJam resource.
+     *
+     * @param trafficJam The TrafficJam to be reported.
+     * @param xRequestId The identification header, as String.
+     * @param caller     The calling instance that implements the onTrafficJamPostComplete method.
+     */
     public void postTrafficJam(final TrafficJam trafficJam, final String xRequestId, final ITrafficJamCallback caller)
     {
         new AsyncTask<TrafficJam, Void, TrafficJam>()
@@ -265,6 +299,11 @@ public class JamBeaconRestClient
 
     }
 
+    /**
+     * GET on the traffic jam endpoint. Returns all known traffic jams as a {@code List}.
+     *
+     * @param caller The calling instance implementing the onGetJamListComplete method.
+     */
     public void getTrafficJamList(final ITrafficJamCallback caller)
     {
         Log.d(TAG, "GETTING JAM LIST");
@@ -320,11 +359,64 @@ public class JamBeaconRestClient
         }.execute();
     }
 
-    public TrafficJam getTrafficJam(UUID id)
+    /**
+     * GET on the traffic jam endpoint. Returns a single TrafficJam resource.
+     *
+     * @param id The Id of the requested TrafficJam resource, as String.
+     */
+    public void getTrafficJam(final String id, final ITrafficJamCallback caller)
     {
-        return null;
+        new AsyncTask<Void, Void, TrafficJam>()
+        {
+            HttpURLConnection connection;
+
+            @Override
+            protected TrafficJam doInBackground(Void... params)
+            {
+                try
+                {
+                    connection = getConnection(HTTP_GET, JAM_ENDPOINT + "/" + id);
+                    connection.setDoInput(true);
+
+                    int statusCode = connection.getResponseCode();
+                    if (statusCode == HttpURLConnection.HTTP_OK)
+                    {
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                        String response = reader.readLine();
+                        reader.close();
+                        return new ObjectMapper().readValue(response, TrafficJam.class);
+                    } else
+                    {
+                        Log.e(TAG, "Traffic Jam " + id + " not found.");
+                        return null;
+                    }
+                } catch (JamBeaconException e)
+                {
+                    Log.e(TAG, "Error getting connection. " + e.getMessage());
+                    return null;
+                } catch (IOException e)
+                {
+                    Log.e(TAG, "Error reading response. " + e.getMessage());
+                    return null;
+                }
+            }
+
+            @Override
+            protected void onPostExecute(TrafficJam result)
+            {
+                connection.disconnect();
+                caller.onGetTrafficJamComplete(result);
+            }
+        }.execute();
     }
 
+    /**
+     * POST to the traffic jam endpoint. Returns the updated resource.
+     *
+     * @param trafficJam The updated TrafficJam.
+     * @param xRequestId The identification header, as String.
+     * @param caller     The calling instance that implements the onTrafficJamUpdateComplete method.
+     */
     public void updateTrafficJam(final TrafficJam trafficJam, final String xRequestId, final ITrafficJamCallback caller)
     {
         new AsyncTask<Void, Void, TrafficJam>()
@@ -381,6 +473,11 @@ public class JamBeaconRestClient
     }
 
 
+    /**
+     * GET on the heartbeat endpoint. Returns a {@code Boolean} that declares availability.
+     *
+     * @param caller The calling instance that implements the onCheckComplete method.
+     */
     public void checkServerAvailability(final IHeartbeatCallback caller)
     {
         new AsyncTask<Void, Void, Boolean>()
@@ -415,12 +512,15 @@ public class JamBeaconRestClient
         }.execute();
     }
 
-
-    public String getEndpoint()
-    {
-        return SERVER_ENDPOINT;
-    }
-
+    /**
+     * Generates a HttpURLConnection with specified method, endpoint and sets the Accept and Content-Type
+     * header depending on method and endpoint.
+     *
+     * @param method   The HTTP method to be uses, as String.
+     * @param endpoint The URL to call, as String.
+     * @return A HttpURLConnection with certain parameter set.
+     * @throws JamBeaconException
+     */
     private static HttpURLConnection getConnection(String method, String endpoint) throws JamBeaconException
     {
         HttpURLConnection connection;
@@ -455,6 +555,13 @@ public class JamBeaconRestClient
         return connection;
     }
 
+    /**
+     * Determines the value of the Accept header depending on method and URL
+     *
+     * @param method
+     * @param endpoint
+     * @return The Accept header, if appropriate, if not, an empty String.
+     */
     private static String getAcceptHeader(String method, String endpoint)
     {
         String acceptHeader = "";
@@ -470,6 +577,13 @@ public class JamBeaconRestClient
         return acceptHeader;
     }
 
+    /**
+     * Determines the value of the Content-Type header field, depending on method and URL.
+     *
+     * @param method
+     * @param endpoint
+     * @return The Content-Type, if applicable, if not, an empty String.
+     */
     private static String getContentType(String method, String endpoint)
     {
         String contentType = "";

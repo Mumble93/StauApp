@@ -17,6 +17,9 @@ import com.sta.dhbw.jambeaconrestclient.TrafficJam;
 
 import java.util.List;
 
+/**
+ * Activity that displays a Map with every jam as a marker on it. Uses the Google Maps API v2.
+ */
 public class JamMapActivity extends Activity
 {
     private static final String TAG = JamMapActivity.class.getSimpleName();
@@ -31,6 +34,8 @@ public class JamMapActivity extends Activity
         setContentView(R.layout.jam_map_layout);
         Intent intent = getIntent();
 
+        //Check if Activity was called via a select on a list item or the map button
+        //in the ActionBar of the JamListActivity
         if (intent != null)
         {
             Log.d(TAG, "Got intent");
@@ -57,6 +62,12 @@ public class JamMapActivity extends Activity
         setMarkers();
     }
 
+    /**
+     * Initializes the Google Map via the {@code FragmentManager}. If the Activity was called from
+     * selecting an item in the JamListActivity, the Map will zoom in on the specified location.
+     *
+     * @param zoomedLocation The location to zoom into, as LatLng
+     */
     private void initMap(LatLng zoomedLocation)
     {
         if (null == googleMap)
@@ -77,6 +88,9 @@ public class JamMapActivity extends Activity
         }
     }
 
+    /**
+     * Creates the markers on the Google Map that represent the known traffic jams.
+     */
     private void setMarkers()
     {
         if (trafficJamList != null && !trafficJamList.isEmpty())
@@ -91,6 +105,11 @@ public class JamMapActivity extends Activity
         }
     }
 
+    /**
+     * Adds a single marker to the map.
+     *
+     * @param location The location of the marker, as LatLng
+     */
     private void setMarker(LatLng location)
     {
         MarkerOptions marker = new MarkerOptions().position(location);

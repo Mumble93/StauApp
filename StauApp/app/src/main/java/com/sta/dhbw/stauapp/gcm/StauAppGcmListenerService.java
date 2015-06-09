@@ -21,10 +21,16 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * This Service listens for GCM messages and processes them on receive.
+ */
 public class StauAppGcmListenerService extends GcmListenerService
 {
     private static final String TAG = StauAppGcmListenerService.class.getSimpleName();
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onMessageReceived(String from, Bundle data)
     {
@@ -32,11 +38,17 @@ public class StauAppGcmListenerService extends GcmListenerService
         digestMessage(data);
     }
 
+    /**
+     * Processes the data of the received GCM message and notifies the user.
+     *
+     * @param data The payload of the message, as Bundle.
+     */
     private void digestMessage(Bundle data)
     {
         String type = data.getString("type");
         if (type != null && type.equals("jam"))
         {
+            //Reverse geocode the location for easier legibility
             Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
             String adminArea = null;
             try
@@ -59,6 +71,11 @@ public class StauAppGcmListenerService extends GcmListenerService
         }
     }
 
+    /**
+     * Displays a notification to the user about the details of the received message.
+     *
+     * @param content The Content Text of the displayed notification.
+     */
     private void sendNotification(String content)
     {
         Uri ringtone = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
@@ -71,6 +88,7 @@ public class StauAppGcmListenerService extends GcmListenerService
 
         Intent resultIntent = new Intent(this, JamListActivity.class);
 
+        //When clicked, the notification will lead the user to the JamListActivity
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
         stackBuilder.addParentStack(JamListActivity.class);
         stackBuilder.addNextIntent(resultIntent);
